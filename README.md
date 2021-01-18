@@ -1,9 +1,9 @@
 # Telescope-media-files.nvim
-preview thumbnail image, pdf and video on telescope
+Preview images, pdf, epub, video, and fonts from Neovim using Telescope.
 
-![Demo](https://i.imgur.com/Vtt8Ofg.png)
+![Demo](https://i.imgur.com/wEO04TK.gif)
 
-**ONLY SUPPORT LINUX**
+**ONLY SUPPORTED ON LINUX**
 
 ## Install
 ```viml
@@ -21,13 +21,17 @@ require('telescope').load_extension('media_files')
 ```
 
 ## Configuration
+This extension can be configured using `extensions` field inside Telescope
+setup function.
 
 ```lua
 require'telescope'.setup {
   extensions = {
     media_files = {
-      filetypes = {"png", "webp", "jpg", "jpeg"}, -- filetypes whitelist
-      find_cmd = "rg" -- find command
+      -- filetypes whitelist
+      -- defaults to {"png", "jpg", "mp4", "webm", "pdf"}
+      filetypes = {"png", "webp", "jpg", "jpeg"},
+      find_cmd = "rg" -- find command (defaults to `fd`)
     }
   },
 }
@@ -35,13 +39,13 @@ require'telescope'.setup {
 
 ## Available commands
 ```viml
-Telescope media_files media_files
+:Telescope media_files
 
 "Using lua function
 lua require('telescope').extensions.media_files.media_files()
 ```
 
-when you select a file it will copy a relative path of that file to clipboard
+When you press `<CR>` on a selected file, it will copy its relative path to the clipboard
 
 
 ## Prerequisites
