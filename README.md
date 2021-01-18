@@ -1,10 +1,11 @@
 # Telescope-media-files.nvim
-preview thumbnail image pdf and video on telescope
+preview thumbnail image, pdf and video on telescope
 
 ![Demo](https://i.imgur.com/Vtt8Ofg.png)
 
-** ONLY SUPPORT LINUX **
+**ONLY SUPPORT LINUX**
 
+## Install
 ```viml
 Plug 'nvim-lua/popup.nvim'
 Plug 'nvim-lua/plenary.nvim'
@@ -28,7 +29,8 @@ lua require('telescope').extensions.media_files.media_files()
 ```
 
 ## Prerequisites
-* [Überzug](https://github.com/seebye/ueberzug) and [Vifm](https://github.com/vifm/vifm) (isn't this obvious?)
+* [Überzug](https://github.com/seebye/ueberzug)
+* fdfind
 * [ffmpegthumbnailer](https://github.com/dirkvdb/ffmpegthumbnailer)
 * ImageMagick
 * pdftoppm (Available in the AUR as **poppler** package.)
