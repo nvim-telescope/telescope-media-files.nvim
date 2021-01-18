@@ -19,6 +19,17 @@ local M = {}
 local filetypes = {}
 local find_cmd = ""
 
+local escape_chars = function(string)
+  return string.gsub(string,  "[%(|%)|\\|%[|%]|%-|%{%}|%?|%+|%*|%s]", {
+    ["\\"] = "\\\\", ["-"] = "\\-",
+    ["("] = "\\(", [")"] = "\\)",
+    ["["] = "\\[", ["]"] = "\\]",
+    ["{"] = "\\{", ["}"] = "\\}",
+    ["?"] = "\\?", ["+"] = "\\+",
+    ["*"] = "\\*", [" "] = "\\ "
+  })
+end
+
 M.base_directory=""
 M.media_preview = defaulter(function(opts)
   return previewers.new_termopen_previewer {
@@ -30,7 +41,7 @@ M.media_preview = defaulter(function(opts)
       end
       return {
         M.base_directory .. '/scripts/vimg' ,
-        tmp_table[1],
+        escape_chars(tmp_table[1]),
         preview.col ,
         preview.line ,
         preview.width ,
