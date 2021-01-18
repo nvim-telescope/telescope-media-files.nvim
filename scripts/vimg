@@ -69,15 +69,15 @@ function parse_options {
     extension="${1##*.}"
     case $extension in
     jpg | png | jpeg | webp)
-        draw_preview  imagepreview $1 $2 $3 $4 $5
+        draw_preview  imagepreview "$1" $2 $3 $4 $5
     ;;
 
     avi | mp4 | wmv | dat | 3gp | ogv | mkv | mpg | mpeg | vob |  m2v | mov | webm | mts | m4v | rm  | qt | divx)
-        draw_preview  videopreview $1 $2 $3 $4 $5
+        draw_preview  videopreview "$1" $2 $3 $4 $5
     ;;
 
-    pdf)
-        draw_preview  pdfpreview $1 $2 $3 $4 $5
+    pdf | epub)
+        draw_preview  pdfpreview "$1" $2 $3 $4 $5
     ;;
 
     *)
