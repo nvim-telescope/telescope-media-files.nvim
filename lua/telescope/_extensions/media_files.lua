@@ -38,7 +38,6 @@ M.media_preview = defaulter(function(opts)
 end, {})
 
 function M.media_files(opts)
-print(vim.inspect(require('telescope').extensions.media_files))
   local sourced_file = require('plenary.debug_utils').sourced_filepath()
   M.base_directory = vim.fn.fnamemodify(sourced_file, ":h:h:h:h")
   opts = opts or {}
