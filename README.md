@@ -28,6 +28,9 @@ Telescope media_files media_files
 lua require('telescope').extensions.media_files.media_files()
 ```
 
+when you select a file it will copy a relative path of that file to clipboard
+
+
 ## Prerequisites
 * [Überzug](https://github.com/seebye/ueberzug)
 * fdfind
