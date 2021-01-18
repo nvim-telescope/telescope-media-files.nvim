@@ -20,6 +20,19 @@ require('telescope').load_extension('media_files')
 
 ```
 
+## Configuration
+
+```lua
+require'telescope'.setup {
+  extensions = {
+    media_files = {
+      filetypes = {"png", "webp", "jpg", "jpeg"}, -- filetypes whitelist
+      find_cmd = "rg" -- find command
+    }
+  },
+}
+```
+
 ## Available commands
 ```viml
 Telescope media_files media_files
@@ -32,12 +45,11 @@ when you select a file it will copy a relative path of that file to clipboard
 
 
 ## Prerequisites
-* [Überzug](https://github.com/seebye/ueberzug)
-* fdfind
-* [ffmpegthumbnailer](https://github.com/dirkvdb/ffmpegthumbnailer)
-* ImageMagick
-* pdftoppm (Available in the AUR as **poppler** package.)
-* [epub-thumbnailer](https://github.com/marianosimone/epub-thumbnailer)
-* [fontpreview](https://github.com/sdushantha/fontpreview)
+* [Überzug](https://github.com/seebye/ueberzug) (required for image support)
+* [fd](https://github.com/sharkdp/fd) / [rg](https://github.com/BurntSushi/ripgrep) / [find](https://man7.org/linux/man-pages/man1/find.1.html) or fdfind in Ubuntu/Debian.
+* [ffmpegthumbnailer](https://github.com/dirkvdb/ffmpegthumbnailer) (optional, for video preview support)
+* [pdftoppm](https://linux.die.net/man/1/pdftoppm) (optional, for pdf preview support. Available in the AUR as **poppler** package.)
+* [epub-thumbnailer](https://github.com/marianosimone/epub-thumbnailer) (optional, for epub preview support.)
+* [fontpreview](https://github.com/sdushantha/fontpreview) (optional, for font preview support)
 
 credit to https://github.com/cirala/vifmimg

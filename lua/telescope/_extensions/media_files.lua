@@ -16,74 +16,90 @@ local conf = require('telescope.config').values
 
 local M = {}
 
+local filetypes = {}
+local find_cmd = ""
+
 M.base_directory=""
 M.media_preview = defaulter(function(opts)
-    return previewers.new_termopen_previewer {
-        get_command = opts.get_command or function(entry)
-        local tmp_table = vim.split(entry.value,"\t");
-        local preview = opts.get_preview_window()
-        if vim.tbl_isempty(tmp_table) then
-          return {"echo", ""}
-        end
-        return {
-          M.base_directory .. '/scripts/vimg' ,
-          tmp_table[1],
-          preview.col ,
-          preview.line ,
-          preview.width ,
-          preview.height
-        }
+  return previewers.new_termopen_previewer {
+    get_command = opts.get_command or function(entry)
+      local tmp_table = vim.split(entry.value,"\t");
+      local preview = opts.get_preview_window()
+      if vim.tbl_isempty(tmp_table) then
+        return {"echo", ""}
       end
+      return {
+        M.base_directory .. '/scripts/vimg' ,
+        tmp_table[1],
+        preview.col ,
+        preview.line ,
+        preview.width ,
+        preview.height
+      }
+    end
   }
 end, {})
 
 function M.media_files(opts)
+  local find_commands = {
+    find = {
+      'find',
+      '.',
+      '-iregex',
+      [[.*\.\(]]..table.concat(filetypes,"\\|") .. [[\)$]]
+    },
+    fd = {
+      'fd',
+      '--type',
+      'f',
+      '--regex',
+      [[.*.(]]..table.concat(filetypes,"|") .. [[)$]],
+      '.'
+    },
+    fdfind = {
+      'fdfind',
+      '--type',
+      'f',
+      '--regex',
+      [[.*.(]]..table.concat(filetypes,"|") .. [[)$]],
+      '.'
+    },
+    rg = {
+      'rg',
+      '--files',
+      '--glob',
+      [[*.{]]..table.concat(filetypes,",") .. [[}]],
+      '.'
+    },
+  }
+
+  if not vim.fn.executable(find_cmd) then
+    error("You don't have "..find_cmd.."! Install it first or use other finder.")
+    return
+  end
+
+  if not find_commands[find_cmd] then
+    error(find_cmd.." is not supported!")
+    return
+  end
+
   local sourced_file = require('plenary.debug_utils').sourced_filepath()
   M.base_directory = vim.fn.fnamemodify(sourced_file, ":h:h:h:h")
   opts = opts or {}
   opts.attach_mappings= function(prompt_bufnr,map)
     actions.goto_file_selection_edit:replace(function()
-        local entry = actions.get_selected_entry()
-        actions.close(prompt_bufnr)
-        if entry[1] then
-            local filename = entry[1]
-            local cmd="call setreg(v:register,'"..filename.."')";
-            print(vim.inspect(cmd))
-            vim.cmd(cmd)
-        end
+      local entry = actions.get_selected_entry()
+      actions.close(prompt_bufnr)
+      if entry[1] then
+        local filename = entry[1]
+        local cmd="call setreg(v:register,'"..filename.."')";
+        vim.cmd(cmd)
+        print("The image path has been copied!")
+      end
     end)
-
-     map('i','<c-t>',function ()
-       vim.cmd[[stopinsert]]
-     end)
-
     return true
   end
   opts.shorten_path = true
-  local filetype ={"png", "jpg", "mp4", "webm", "pdf" }
-  local find_command={
-    'find',
-    '.',
-    '-iregex',
-    [[.*\.\(]]..table.concat(filetype,"\\|") .. [[\)$]]
-  }
-  if 1 == vim.fn.executable("fd") then
-    find_command = {
-      'fdfind' ,
-      '--type', 'f',
-      '--regex',
-      [[.*.(]]..table.concat(filetype,"|") .. [[)$]],
-      '.'
-    }
-  elseif 1 == vim.fn.executable("fdfind") then
-    find_command = {
-      'fdfind' ,
-      '--type', 'f',
-      '--regex',
-      [[.*.(]]..table.concat(filetype,"|") .. [[)$]],
-      '.'
-    }
-  end
 
   local popup_opts={}
   opts.get_preview_window=function ()
@@ -92,7 +108,7 @@ function M.media_files(opts)
   local picker=pickers.new(opts, {
     prompt_title = 'Media Files',
     finder = finders.new_oneshot_job(
-      find_command,
+      find_commands[find_cmd],
       opts
     ),
     previewer = M.media_preview.new(opts),
@@ -110,7 +126,11 @@ end
 
 
 return require('telescope').register_extension {
-    exports = {
-      media_files = M.media_files
-    },
+  setup = function(ext_config)
+    filetypes = ext_config.filetypes or {"png", "jpg", "mp4", "webm", "pdf"}
+    find_cmd = ext_config.find_cmd or "fd"
+  end,
+  exports = {
+    media_files = M.media_files
+  },
 }
