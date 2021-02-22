@@ -9,6 +9,7 @@ end
 local utils = require('telescope.utils')
 local defaulter = utils.make_default_callable
 local actions = require('telescope.actions')
+local action_state = require('telescope.actions.state')
 local finders = require('telescope.finders')
 local pickers = require('telescope.pickers')
 local previewers = require('telescope.previewers')
@@ -98,8 +99,8 @@ function M.media_files(opts)
   M.base_directory = vim.fn.fnamemodify(sourced_file, ":h:h:h:h")
   opts = opts or {}
   opts.attach_mappings= function(prompt_bufnr,map)
-    actions.goto_file_selection_edit:replace(function()
-      local entry = actions.get_selected_entry()
+    actions.select_default:replace(function()
+      local entry = action_state.get_selected_entry()
       actions.close(prompt_bufnr)
       if entry[1] then
         local filename = entry[1]
