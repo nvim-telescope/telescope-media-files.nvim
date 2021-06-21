@@ -44,7 +44,7 @@ function draw_preview {
     elif [[ "$1" == "videopreview" ]]; then
         path="${2##*/}"
         echo -e "Loading preview..\nFile: $path"
-        ffmpegthumbnailer -i "${PWD}/${path}" -o "${TMP_FOLDER}/${path}.png" -s 0 -q 10
+        ffmpegthumbnailer -i "${PWD}/$2" -o "${TMP_FOLDER}/${path}.png" -s 0 -q 10
         >"${UEBERZUG_FIFO}" declare -A -p cmd=( \
             [action]=add [identifier]="${PREVIEW_ID}" \
             [x]="${3}" [y]="${4}" \
@@ -54,7 +54,7 @@ function draw_preview {
     elif [[ "$1" == "pdfpreview" ]]; then
         path="${2##*/}"
         echo -e "Loading preview..\nFile: $path"
-        [[ ! -f "${TMP_FOLDER}/${path}.png" ]] && pdftoppm -png -singlefile "$path" "${TMP_FOLDER}/${path}"
+        [[ ! -f "${TMP_FOLDER}/${path}.png" ]] && pdftoppm -png -singlefile "$2" "${TMP_FOLDER}/${path}"
         >"${UEBERZUG_FIFO}" declare -A -p cmd=( \
             [action]=add [identifier]="${PREVIEW_ID}" \
             [x]="${3}" [y]="${4}" \
