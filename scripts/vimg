@@ -44,7 +44,7 @@ function draw_preview {
     elif [[ "$1" == "videopreview" ]]; then
         path="${2##*/}"
         echo -e "Loading preview..\nFile: $path"
-        ffmpegthumbnailer -i "${PWD}/$2" -o "${TMP_FOLDER}/${path}.png" -s 0 -q 10
+        ffmpegthumbnailer -i "$2" -o "${TMP_FOLDER}/${path}.png" -s 0 -q 10
         >"${UEBERZUG_FIFO}" declare -A -p cmd=( \
             [action]=add [identifier]="${PREVIEW_ID}" \
             [x]="${3}" [y]="${4}" \
