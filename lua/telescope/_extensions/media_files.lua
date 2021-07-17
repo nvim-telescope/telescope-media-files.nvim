@@ -100,7 +100,7 @@ function M.media_files(opts)
     end)
     return true
   end
-  opts.shorten_path = true
+  opts.path_display = { "shorten" }
 
   local popup_opts={}
   opts.get_preview_window=function ()
