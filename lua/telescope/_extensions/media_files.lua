@@ -128,7 +128,7 @@ end
 
 return require('telescope').register_extension {
   setup = function(ext_config)
-    filetypes = ext_config.filetypes or {"png", "jpg", "mp4", "webm", "pdf"}
+    filetypes = ext_config.filetypes or {"png", "jpg", "gif", "mp4", "webm", "pdf"}
     find_cmd = ext_config.find_cmd or "fd"
   end,
   exports = {

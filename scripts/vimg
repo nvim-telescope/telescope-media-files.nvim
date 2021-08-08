@@ -41,6 +41,36 @@ function draw_preview {
             [width]="${5}" [height]="${6}" \
             [path]="${2}")
 
+    elif [[ "$1" == "gifpreview" ]]; then
+        file="${2##*/}"
+        path="${PWD}/$2"; path="${path// /_}"; path="${path//\//_}" #replace space and / into _
+        path="${TMP_FOLDER}/${path}"
+
+        echo -ne "Loading preview... 0%\r"
+        frame_total=$(identify -format "%n\n" $2 | head -1)
+        IFS=$'\n' read -r -d '' -a ticks < <(identify -format "%T\n" $2 && printf '\0'); unset IFS
+        [[ $(ls ${path}/ 2>/dev/null | wc -l) -ne $frame_total ]] \
+          && (mkdir -p ${path} && convert -coalesce -resize 720x480\> "$2" "${path}/${file}.png"&disown)
+
+        frame_index=0
+        while true; do
+          frame_extracted=$(ls -1 ${path}/ 2>/dev/null| wc -l)
+          if [[ $frame_extracted -lt $frame_total ]]; then
+            echo -ne "Loading preview... $((frame_extracted*100/frame_total))%\r"
+          else
+            echo -ne "                     \r"
+            >"${UEBERZUG_FIFO}" declare -A -p cmd=( \
+                [action]=add [identifier]="${PREVIEW_ID}" \
+                [x]="${3}" [y]="${4}" \
+                [width]="${5}" [height]="${6}" \
+                [path]="${path}/${file}-${frame_index}.png")
+            delay=$(bc <<< "scale=2; ${ticks[$frame_index]}/100") # 1 tick == 1/100s
+            sleep $delay
+          fi
+          frame_index=$((frame_index + 1))
+          [[ $frame_index -ge $frame_total ]] && frame_index=0
+        done
+
     elif [[ "$1" == "videopreview" ]]; then
         path="${2##*/}"
         echo -e "Loading preview..\nFile: $path"
@@ -70,6 +100,10 @@ function parse_options {
     case $extension in
     jpg | png | jpeg | webp)
         draw_preview  imagepreview "$1" $2 $3 $4 $5
+    ;;
+
+    gif)
+        draw_preview  gifpreview "$1" $2 $3 $4 $5
     ;;
 
     avi | mp4 | wmv | dat | 3gp | ogv | mkv | mpg | mpeg | vob |  m2v | mov | webm | mts | m4v | rm  | qt | divx)
