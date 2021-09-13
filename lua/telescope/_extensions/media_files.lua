@@ -33,7 +33,7 @@ M.media_preview = defaulter(function(opts)
         M.base_directory .. '/scripts/vimg' ,
         string.format([[%s]],tmp_table[1]),
         preview.col ,
-        preview.line ,
+        preview.line + 1 ,
         preview.width ,
         preview.height
       }
@@ -93,9 +93,8 @@ function M.media_files(opts)
       actions.close(prompt_bufnr)
       if entry[1] then
         local filename = entry[1]
-        local cmd="call setreg(v:register,'"..filename.."')";
-        vim.cmd(cmd)
-        print("The image path has been copied!")
+        vim.fn.setreg(vim.v.register, filename)
+        vim.notify("The image path has been copied!")
       end
     end)
     return true
