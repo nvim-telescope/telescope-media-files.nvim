@@ -29,9 +29,14 @@ require'telescope'.setup {
   extensions = {
     media_files = {
       -- filetypes whitelist
-      -- defaults to {"png", "jpg", "mp4", "webm", "pdf"}
+      -- defaults to {"png", "jpg", "gif", "mp4", "webm", "pdf"}
       filetypes = {"png", "webp", "jpg", "jpeg"},
       find_cmd = "rg" -- find command (defaults to `fd`)
+      -- default: copy entry's relative path to vim clipboard
+      on_enter = function(filepath)
+        vim.fn.setreg('+', filepath)
+        vim.notify("The image path has been copied to system clipboard!")
+      end
     }
   },
 }
@@ -45,7 +50,15 @@ require'telescope'.setup {
 lua require('telescope').extensions.media_files.media_files()
 ```
 
-When you press `<CR>` on a selected file, it will copy its relative path to the clipboard
+```lua
+-- Useful for plugin developer that use telescope-media-files on their plugin
+require('telescope').extensions.media_files.media_files({}, function(filepath)
+  -- Your custom action to do when file is selected
+end)
+```
+
+When you press `<CR>`/<kbd>Enter</kbd> on a selected file, it will copy its
+relative path to vim clipboard except when you modify `on_enter`.
 
 
 ## Prerequisites
