@@ -19,6 +19,7 @@ local M = {}
 
 local filetypes = {}
 local find_cmd = ""
+local on_enter
 
 M.base_directory=""
 M.media_preview = defaulter(function(opts)
@@ -41,7 +42,7 @@ M.media_preview = defaulter(function(opts)
   }
 end, {})
 
-function M.media_files(opts)
+function M.media_files(opts, custom_on_enter)
   local find_commands = {
     find = {
       'find',
@@ -92,9 +93,9 @@ function M.media_files(opts)
       local entry = action_state.get_selected_entry()
       actions.close(prompt_bufnr)
       if entry[1] then
-        local filename = entry[1]
-        vim.fn.setreg(vim.v.register, filename)
-        vim.notify("The image path has been copied!")
+        local filepath = entry[1]
+        custom_on_enter = custom_on_enter or on_enter
+        custom_on_enter(filepath)
       end
     end)
     return true
@@ -129,6 +130,11 @@ return require('telescope').register_extension {
   setup = function(ext_config)
     filetypes = ext_config.filetypes or {"png", "jpg", "gif", "mp4", "webm", "pdf"}
     find_cmd = ext_config.find_cmd or "fd"
+    on_enter = ext_config.on_enter or
+    function(filepath)
+      vim.fn.setreg(vim.v.register, filepath)
+      vim.notify("The image path has been copied!")
+    end
   end,
   exports = {
     media_files = M.media_files
