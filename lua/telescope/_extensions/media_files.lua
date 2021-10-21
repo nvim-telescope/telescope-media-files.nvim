@@ -26,14 +26,15 @@ M.media_preview = defaulter(function(opts)
     get_command = opts.get_command or function(entry)
       local tmp_table = vim.split(entry.value,"\t");
       local preview = opts.get_preview_window()
+      opts.cwd = opts.cwd and vim.fn.expand(opts.cwd) or vim.loop.cwd()
       if vim.tbl_isempty(tmp_table) then
         return {"echo", ""}
       end
       return {
         M.base_directory .. '/scripts/vimg' ,
-        string.format([[%s]],tmp_table[1]),
-        preview.col -1,
-        preview.line  ,
+        string.format([[%s/%s]], opts.cwd, tmp_table[1]),
+        preview.col ,
+        preview.line + 1 ,
         preview.width ,
         preview.height
       }
