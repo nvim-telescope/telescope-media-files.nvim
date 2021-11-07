@@ -32,8 +32,8 @@ M.media_preview = defaulter(function(opts)
       return {
         M.base_directory .. '/scripts/vimg' ,
         string.format([[%s]],tmp_table[1]),
-        preview.col ,
-        preview.line + 1 ,
+        preview.col -1,
+        preview.line  ,
         preview.width ,
         preview.height
       }
@@ -127,7 +127,7 @@ end
 
 return require('telescope').register_extension {
   setup = function(ext_config)
-    filetypes = ext_config.filetypes or {"png", "jpg", "gif", "mp4", "webm", "pdf"}
+    filetypes = ext_config.filetypes or {"png", "jpg", "gif", "mp4", "webm", "pdf", "svg"}
     find_cmd = ext_config.find_cmd or "fd"
   end,
   exports = {

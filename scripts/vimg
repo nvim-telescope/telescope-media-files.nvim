@@ -81,6 +81,17 @@ function draw_preview {
             [width]="${5}" [height]="${6}" \
             [path]="${TMP_FOLDER}/${path}.png")
 
+    elif [[ "$1" == "svgpreview" ]]; then
+        path="${2##*/}"
+        echo -e "Loading preview..\nFile: $path"
+        convert -density ${5} "${PWD}/${2}"  "${TMP_FOLDER}/${path}.png"
+
+        >"${UEBERZUG_FIFO}" declare -A -p cmd=( \
+            [action]=add [identifier]="${PREVIEW_ID}" \
+            [x]="${3}" [y]="${4}" \
+            [width]="${5}" [height]="${6}" \
+            [path]="${TMP_FOLDER}/${path}.png")
+
     elif [[ "$1" == "pdfpreview" ]]; then
         path="${2##*/}"
         echo -e "Loading preview..\nFile: $path"
@@ -114,6 +125,9 @@ function parse_options {
         draw_preview  pdfpreview "$1" $2 $3 $4 $5
     ;;
 
+    svg)
+        draw_preview  svgpreview "$1" $2 $3 $4 $5
+    ;;
     *)
     echo -n "unknown file $1"
     ;;
