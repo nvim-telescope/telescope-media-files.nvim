@@ -83,8 +83,8 @@ function draw_preview {
 
     elif [[ "$1" == "svgpreview" ]]; then
         path="${2##*/}"
-        echo -e "Loading preview..\nFile: $path"
-        convert -density ${5} "${PWD}/${2}"  "${TMP_FOLDER}/${path}.png"
+        # echo -e "Loading preview..\nFile: $path"
+        convert -density ${5} "${2}"  "${TMP_FOLDER}/${path}.png"
 
         >"${UEBERZUG_FIFO}" declare -A -p cmd=( \
             [action]=add [identifier]="${PREVIEW_ID}" \
