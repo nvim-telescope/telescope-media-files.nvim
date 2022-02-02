@@ -1,0 +1,29 @@
+[scripts/*.bash]
+indent_style = space
+indent_size = 2
+
+shell_variant      = posix # like -ln=posix
+binary_next_line   = true  # like -bn
+switch_case_indent = true  # like -ci
+space_redirects    = true  # like -sr
+keep_padding       = true  # like -kp
+function_next_line = true  # like -fn
+never_split        = true  # like -ns
+
+[lua/**]
+ignore = true
+
+[*.md]
+ignore = true
+
+[*.txt]
+ignore = true
+
+[.git/**]
+ignore = true
+
+[*.toml]
+ignore = true
+
+[*.json]
+ignore = true

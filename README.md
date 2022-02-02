@@ -1,27 +1,25 @@
 # Telescope-media-files.nvim
+
 Preview images, pdf, epub, video, and fonts from Neovim using Telescope.
 
-![Demo](https://i.imgur.com/wEO04TK.gif)
-
-**ONLY SUPPORTED ON LINUX**
-
 ## Install
+
 ```viml
 Plug 'nvim-lua/popup.nvim'
 Plug 'nvim-lua/plenary.nvim'
 Plug 'nvim-telescope/telescope.nvim'
 Plug 'nvim-telescope/telescope-media-files.nvim'
-
 ```
+
 ## Setup
 
 ``` lua
 require('telescope').load_extension('media_files')
-
 ```
 
 ## Configuration
-This extension can be configured using `extensions` field inside Telescope
+
+This extension should be configured using `extensions` field inside Telescope
 setup function.
 
 ```lua
@@ -36,13 +34,18 @@ require'telescope'.setup {
       on_enter = function(filepath)
         vim.fn.setreg('+', filepath)
         vim.notify("The image path has been copied to system clipboard!")
-      end
+      end,
+      -- offset of the preview image
+      offsets = { x = -1, y = -1 }, 
+      -- width and height of the preview image
+      sizes = { width = -1, height = 0 },
     }
   },
 }
 ```
 
 ## Available commands
+
 ```viml
 :Telescope media_files
 
@@ -57,16 +60,16 @@ require('telescope').extensions.media_files.media_files({}, function(filepath)
 end)
 ```
 
-When you press `<CR>`/<kbd>Enter</kbd> on a selected file, it will copy its
-relative path to vim clipboard except when you modify `on_enter`.
-
+When you press `<CR>/<Enter>` on a selected file, it will copy its
+relative path to vim clipboard except when you edit `on_enter`.
 
 ## Prerequisites
-* [Überzug](https://github.com/seebye/ueberzug) (required for image support)
-* [fd](https://github.com/sharkdp/fd) / [rg](https://github.com/BurntSushi/ripgrep) / [find](https://man7.org/linux/man-pages/man1/find.1.html) or fdfind in Ubuntu/Debian.
-* [ffmpegthumbnailer](https://github.com/dirkvdb/ffmpegthumbnailer) (optional, for video preview support)
-* [pdftoppm](https://linux.die.net/man/1/pdftoppm) (optional, for pdf preview support. Available in the AUR as **poppler** package.)
-* [epub-thumbnailer](https://github.com/marianosimone/epub-thumbnailer) (optional, for epub preview support.)
-* [fontpreview](https://github.com/sdushantha/fontpreview) (optional, for font preview support)
 
-credit to https://github.com/cirala/vifmimg
+  - [Überzug](https://github.com/seebye/ueberzug) (required for image support)
+  - [fd](https://github.com/sharkdp/fd) / [rg](https://github.com/BurntSushi/ripgrep) / [find](https://man7.org/linux/man-pages/man1/find.1.html) or fdfind in Ubuntu/Debian.
+  - [ffmpegthumbnailer](https://github.com/dirkvdb/ffmpegthumbnailer) (optional, for video preview support)
+  - [pdftoppm](https://linux.die.net/man/1/pdftoppm) (optional, for pdf preview support. Available in the AUR as **poppler** package.)
+  - [epub-thumbnailer](https://github.com/marianosimone/epub-thumbnailer) (optional, for epub preview support.)
+  - [fontpreview](https://github.com/sdushantha/fontpreview) (optional, for font preview support)
+
+Credit to [vifmimg](https://github.com/cirala/vifmimg).

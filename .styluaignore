@@ -1,0 +1,10 @@
+README.md
+LICENSE.txt
+
+.stylua.toml
+.gitignore
+
+.git/
+.github/
+
+scripts/
