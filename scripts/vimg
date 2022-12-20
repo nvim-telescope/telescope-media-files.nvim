@@ -8,6 +8,32 @@ declare -x PREVIEW_ID="preview"
 declare -x TMP_FOLDER="/tmp/vimg"
 mkdir -p $TMP_FOLDER
 
+function render_at_size {
+  if ! command -v identify &> /dev/null; then
+    echo "identify (part of imagemagick) could not be found in your path,\nplease install it to display media content"
+    exit
+  fi
+
+  max_width="${1}"
+  max_height="${2}"
+  img_path="${3}"
+  img_stretch="${4}"
+
+  # Requires imagemagick's identify command
+  img_width=$(identify -format "%w" "${img_path}")
+  img_height=$(identify -format "%h" "${img_path}")
+
+  # Get dimensions from lua script and push them into an array
+  scripts_dir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+  local raw_dimensions=$(lua "${scripts_dir}/calc_image_size.lua" "${max_width}" "${max_height}" "${img_width}" "${img_height}" "${img_stretch}")
+  dimensions=($raw_dimensions)
+  new_width="${dimensions[0]}"
+  new_height="${dimensions[1]}"
+
+  # -s makes gifs static
+  viu -b -s -w "${new_width}" -h "${new_height}" "${img_path}"
+}
+
 function draw_preview {
     if ! command -v viu &> /dev/null; then
       echo "VIU could not be found in your path,\nplease install it to display media content"
@@ -15,13 +41,14 @@ function draw_preview {
     fi
 
     if [[ "$1" == "imagepreview" ]]; then
-      viu -b -w ${5} -h ${6} "${2}"
+      render_at_size "${5}" "${6}" "${2}" "${7}"
+      # viu -b -w ${5} -h ${6} "${2}"
 
     elif [[ "$1" == "gifpreview" ]]; then
       # This is static for now, feel free to re-introduce FIFO to make
       # animations work again, plaing viu gifs (removing the -s flag) causes
       # the preview window to scroll weirdly
-      viu -b -s -w ${5} -h ${6} "${2}"
+      render_at_size "${5}" "${6}" "${2}" "${7}"
 
     elif [[ "$1" == "videopreview" ]]; then
       if ! command -v viu &> /dev/null; then
@@ -32,15 +59,14 @@ function draw_preview {
       echo -e "Loading preview..\nFile: $path"
       ffmpegthumbnailer -i "$2" -o "${TMP_FOLDER}/${path}.png" -s 0 -q 10
       clear
-      viu -b -w ${5} -h ${6} "${TMP_FOLDER}/${path}.png"
-
+      render_at_size "${5}" "${6}" "${TMP_FOLDER}/${path}.png" "${7}"
 
     elif [[ "$1" == "pdfpreview" ]]; then
       path="${2##*/}"
         echo -e "Loading preview..\nFile: $path"
         [[ ! -f "${TMP_FOLDER}/${path}.png" ]] && pdftoppm -png -singlefile "$2" "${TMP_FOLDER}/${path}"
         clear
-        viu -b -w ${5} -h ${6} "${TMP_FOLDER}/${path}.png"
+        render_at_size "${5}" "${6}" "${TMP_FOLDER}/${path}.png" "${7}"
     fi
 }
 
@@ -48,19 +74,19 @@ function parse_options {
     extension="${1##*.}"
     case $extension in
     jpg | png | jpeg | webp)
-        draw_preview  imagepreview "$1" $2 $3 $4 $5
+        draw_preview  imagepreview "$1" $2 $3 $4 $5 $6
     ;;
 
     gif)
-        draw_preview  gifpreview "$1" $2 $3 $4 $5
+        draw_preview  gifpreview "$1" $2 $3 $4 $5 $6
     ;;
 
     avi | mp4 | wmv | dat | 3gp | ogv | mkv | mpg | mpeg | vob |  m2v | mov | webm | mts | m4v | rm  | qt | divx)
-        draw_preview  videopreview "$1" $2 $3 $4 $5
+        draw_preview  videopreview "$1" $2 $3 $4 $5 $6
     ;;
 
     pdf | epub)
-        draw_preview  pdfpreview "$1" $2 $3 $4 $5
+        draw_preview  pdfpreview "$1" $2 $3 $4 $5 $6
     ;;
 
     *)
