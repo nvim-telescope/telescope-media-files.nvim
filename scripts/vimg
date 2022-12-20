@@ -9,6 +9,10 @@ declare -x TMP_FOLDER="/tmp/vimg"
 mkdir -p $TMP_FOLDER
 
 function draw_preview {
+    if ! command -v viu &> /dev/null; then
+      echo "VIU could not be found in your path,\nplease install it to display media content"
+      exit
+    fi
 
     if [[ "$1" == "imagepreview" ]]; then
       viu -b -w ${5} -h ${6} "${2}"
@@ -20,6 +24,10 @@ function draw_preview {
       viu -b -s -w ${5} -h ${6} "${2}"
 
     elif [[ "$1" == "videopreview" ]]; then
+      if ! command -v viu &> /dev/null; then
+        echo "ffmpegthumbnailer could not be found in your path,\nplease install it to display video previews"
+        exit
+      fi
       path="${2##*/}"
       echo -e "Loading preview..\nFile: $path"
       ffmpegthumbnailer -i "$2" -o "${TMP_FOLDER}/${path}.png" -s 0 -q 10
