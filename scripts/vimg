@@ -11,20 +11,20 @@ mkdir -p $TMP_FOLDER
 function draw_preview {
 
     if [[ "$1" == "imagepreview" ]]; then
-      viu -w ${5} -h ${6} "${2}"
+      viu -b -w ${5} -h ${6} "${2}"
 
     elif [[ "$1" == "gifpreview" ]]; then
       # This is static for now, feel free to re-introduce FIFO to make
       # animations work again, plaing viu gifs (removing the -s flag) causes
       # the preview window to scroll weirdly
-      viu -s -w ${5} -h ${6} "${2}"
+      viu -b -s -w ${5} -h ${6} "${2}"
 
     elif [[ "$1" == "videopreview" ]]; then
       path="${2##*/}"
       echo -e "Loading preview..\nFile: $path"
       ffmpegthumbnailer -i "$2" -o "${TMP_FOLDER}/${path}.png" -s 0 -q 10
       clear
-      viu -w ${5} -h ${6} "${TMP_FOLDER}/${path}.png"
+      viu -b -w ${5} -h ${6} "${TMP_FOLDER}/${path}.png"
 
 
     elif [[ "$1" == "pdfpreview" ]]; then
@@ -32,7 +32,7 @@ function draw_preview {
         echo -e "Loading preview..\nFile: $path"
         [[ ! -f "${TMP_FOLDER}/${path}.png" ]] && pdftoppm -png -singlefile "$2" "${TMP_FOLDER}/${path}"
         clear
-        viu -w ${5} -h ${6} "${TMP_FOLDER}/${path}.png"
+        viu -b -w ${5} -h ${6} "${TMP_FOLDER}/${path}.png"
     fi
 }
 
