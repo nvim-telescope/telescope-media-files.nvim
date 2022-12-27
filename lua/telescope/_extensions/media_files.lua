@@ -16,6 +16,7 @@ local pickers = require("telescope.pickers")
 local previewers = require("telescope.previewers")
 local config = require("telescope.config")
 
+local Job = require("plenary.job")
 local defaulter = utils.make_default_callable
 local action_state = require("telescope.actions.state")
 
@@ -45,22 +46,30 @@ end
 
 local base_directory = ""
 
+local PIDS = {}
 local media_preview = defaulter(function(options)
-  return previewers.new_termopen_previewer({
-    get_command = function(entry)
-      local filepath = vim.trim(entry.value)
-      local preview = options.get_preview_window()
-      if filepath:len() == 0 then
-        return { "echo", "" }
+  return previewers.new({
+    preview_fn = function(self, entry, status)
+      for _, PID in pairs(PIDS) do
+        vim.loop.kill(PID, 9)
       end
-      return {
+
+      local preview = options.get_preview_window()
+      local ueberzug = Job:new({
         base_directory .. "/scripts/view.py",
-        filepath,
+        vim.trim(entry.value),
         preview.col + options.geometry.x,
         preview.line + options.geometry.y,
         preview.width + options.geometry.width,
         preview.height + options.geometry.height,
-      }
+      })
+      ueberzug:start()
+      table.insert(PIDS, ueberzug.pid)
+    end,
+    teardown = function(self)
+      for _, pid in pairs(PIDS) do
+        vim.loop.kill(pid, 9)
+      end
     end,
   })
 end, {})
