@@ -15,9 +15,12 @@ local finders = require("telescope.finders")
 local pickers = require("telescope.pickers")
 local previewers = require("telescope.previewers")
 local config = require("telescope.config")
+local action_state = require("telescope.actions.state")
 
 local Job = require("plenary.job")
-local action_state = require("telescope.actions.state")
+local debug_utils = require("plenary.debug_utils")
+
+local scope = require("telescope._extensions.media.scope")
 
 local DEFAULTS = {
   geometry = {
@@ -58,10 +61,17 @@ local media_preview = utils.make_default_callable(function(options)
   return previewers.new({
     preview_fn = function(_, entry, _)
       kill_process_all()
+
+      scope.create_cache("/tmp/tele.media.cache")
+      local cached_file = vim.trim(entry.value)
+      if scope.is_supported(entry.value) then
+        cached_file = scope.cache_images(entry.value)
+      end
+
       local preview = options.get_preview_window()
       local ueberzug = Job:new({
         BASE_DIR .. "/scripts/view.py",
-        vim.trim(entry.value),
+        cached_file,
         preview.col + options.geometry.x,
         preview.line + options.geometry.y,
         preview.width + options.geometry.width,
@@ -74,10 +84,9 @@ local media_preview = utils.make_default_callable(function(options)
   })
 end, {})
 
-local function media_files(options)
+local function media(options)
   options = vim.tbl_deep_extend("keep", vim.F.if_nil(options, {}), DEFAULTS)
-  local sourced_file = require("plenary.debug_utils").sourced_filepath()
-  BASE_DIR = vim.fn.fnamemodify(sourced_file, ":h:h:h:h")
+  BASE_DIR = vim.fn.fnamemodify(debug_utils.sourced_filepath(), ":h:h:h:h:h")
 
   options.attach_mappings = function(buffer)
     actions.select_default:replace(function()
@@ -110,7 +119,7 @@ end
 return telescope.register_extension({
   setup = setup,
   exports = {
-    media_files = media_files,
+    media = media,
   },
 })
 

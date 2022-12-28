@@ -3,10 +3,23 @@
 # telescope-media-files.nvim
 
 Preview IMAGES, PDF, EPUB, VIDEO, and FONTS from Neovim using Telescope.
+Keep in mind that this is a rewrite so some filetypes are not yet supported.
+Lastly, opening an image for the first time will lag as it is creating caches
+in `/tmp/tele.media.cache` directory.
 
 </div>
 
 > NOTE: This plugin is only supported in Linux.
+
+## SUPPORTS
+
+Following are the filetypes that this picker supports.
+
+- PNG
+- JPG/JPEG
+- SVG
+- WEBP
+- GIF
 
 ## PACKER
 
@@ -47,7 +60,7 @@ require("telescope").setup({
         "rg",
         "--files",
         "--glob",
-        [[*.{]] .. "png,jpg,gif,mp4,webm,pdf" .. [[}]],
+        [[*.{]] .. "png,jpg,gif,mp4,webp,svg,jpeg" .. [[}]],
         ".",
       },
       on_confirm = function(filepath)
@@ -70,10 +83,17 @@ lua require('telescope').extensions.media_files.media_files()
 ## Prerequisites
 
 - [Überzug](https://github.com/seebye/ueberzug) (required for image support)
-- [fd](https://github.com/sharkdp/fd) / [rg](https://github.com/BurntSushi/ripgrep) / [find](https://man7.org/linux/man-pages/man1/find.1.html) or fdfind in Ubuntu/Debian.
-- [ffmpegthumbnailer](https://github.com/dirkvdb/ffmpegthumbnailer) (optional, for video preview support)
-- [pdftoppm](https://linux.die.net/man/1/pdftoppm) (optional, for pdf preview support. Available in the AUR as **poppler** package.)
-- [epub-thumbnailer](https://github.com/marianosimone/epub-thumbnailer) (optional, for epub preview support.)
-- [fontpreview](https://github.com/sdushantha/fontpreview) (optional, for font preview support)
+- [ripgrep](https://github.com/BurntSushi/ripgrep)
 
-Credit to [vifmimg](https://github.com/cirala/vifmimg).
+## TODOS
+
+- [ ] Add support for Ai/EPS.
+- [ ] Get first image if the archive has one.
+- [x] Add support for vectors.
+- [x] Add support for images.
+- [ ] Add support for fonts.
+- [ ] Add support for archives.
+- [ ] Add support for video thumbnails.
+- [ ] Add support for webpages.
+- [ ] Add support for audio covers.
+- [ ] Improve caching.
