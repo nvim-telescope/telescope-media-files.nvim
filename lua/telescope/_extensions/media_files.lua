@@ -17,10 +17,9 @@ local previewers = require("telescope.previewers")
 local config = require("telescope.config")
 
 local Job = require("plenary.job")
-local defaulter = utils.make_default_callable
 local action_state = require("telescope.actions.state")
 
-local defaults = {
+local DEFAULTS = {
   geometry = {
     x = -2,
     y = -2,
@@ -29,9 +28,10 @@ local defaults = {
   },
   find_command = {
     "rg",
+    "--no-config",
     "--files",
     "--glob",
-    [[*.{]] .. "png,jpg,gif,mp4,webm,pdf" .. [[}]],
+    [[*.{]] .. "png,jpg,gif,webp,jpeg" .. [[}]],
     ".",
   },
   on_confirm = function(filepath)
@@ -40,23 +40,27 @@ local defaults = {
   end,
 }
 
-local function setup(options)
-  defaults = vim.tbl_deep_extend("force", defaults, vim.F.if_nil(options, {}))
+local SIGKILL = 9
+local BASE_DIR = ""
+local PIDS = {}
+
+local function kill_process_all()
+  for _, PID in pairs(PIDS) do
+    vim.loop.kill(PID, SIGKILL)
+  end
 end
 
-local base_directory = ""
+local function setup(options)
+  DEFAULTS = vim.tbl_deep_extend("keep", vim.F.if_nil(options, {}), DEFAULTS)
+end
 
-local PIDS = {}
-local media_preview = defaulter(function(options)
+local media_preview = utils.make_default_callable(function(options)
   return previewers.new({
-    preview_fn = function(self, entry, status)
-      for _, PID in pairs(PIDS) do
-        vim.loop.kill(PID, 9)
-      end
-
+    preview_fn = function(_, entry, _)
+      kill_process_all()
       local preview = options.get_preview_window()
       local ueberzug = Job:new({
-        base_directory .. "/scripts/view.py",
+        BASE_DIR .. "/scripts/view.py",
         vim.trim(entry.value),
         preview.col + options.geometry.x,
         preview.line + options.geometry.y,
@@ -66,18 +70,14 @@ local media_preview = defaulter(function(options)
       ueberzug:start()
       table.insert(PIDS, ueberzug.pid)
     end,
-    teardown = function(self)
-      for _, pid in pairs(PIDS) do
-        vim.loop.kill(pid, 9)
-      end
-    end,
+    teardown = kill_process_all,
   })
 end, {})
 
 local function media_files(options)
-  options = vim.tbl_deep_extend("keep", vim.F.if_nil(options, {}), defaults)
+  options = vim.tbl_deep_extend("keep", vim.F.if_nil(options, {}), DEFAULTS)
   local sourced_file = require("plenary.debug_utils").sourced_filepath()
-  base_directory = vim.fn.fnamemodify(sourced_file, ":h:h:h:h")
+  BASE_DIR = vim.fn.fnamemodify(sourced_file, ":h:h:h:h")
 
   options.attach_mappings = function(buffer)
     actions.select_default:replace(function()
