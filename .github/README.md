@@ -51,29 +51,24 @@ require("telescope").setup({
   extensions = {
     media_files = {
       geometry = {
-        x = -2,
-        y = -2,
-        width = 1,
-        height = 1,
+        x = -2,     ---integer
+        y = -2,     ---integer
+        width = 1,  ---integer
+        height = 1, ---integer
       },
-      find_command = {
-        "rg",
-        "--files",
-        "--glob",
-        [[*.{]] .. "png,jpg,gif,mp4,webp,svg,jpeg" .. [[}]],
-        ".",
-      },
-      on_confirm = function(filepath)
-        vim.fn.setreg(vim.v.register, filepath)
-        vim.notify("The image path has been copied!")
-      end,
+      find_command = { "rg", "--files", "--glob", "*.{png,jpg}", "." }, ---table
+      on_confirm = ---<CUSTOM_FUNCTION>
+                   ---canned.set_wallpaper
+                   ---canned.copy_path
+                   ---canned.copy_image
+                   ---canned.open_path,
     },
 })
 ```
 
 ## COMMANDS
 
-```viml
+```vim
 :Telescope media_files
 
 "Using lua function
@@ -82,11 +77,12 @@ lua require('telescope').extensions.media_files.media_files()
 
 ## Prerequisites
 
-- [Überzug](https://github.com/seebye/ueberzug) (required for image support)
+- [ueberzug](https://github.com/seebye/ueberzug) (required for image support)
 - [ripgrep](https://github.com/BurntSushi/ripgrep)
 
 ## TODOS
 
+- [x] Add some canned functions for `config.on_confirm`.
 - [ ] Add support for Ai/EPS.
 - [ ] Get first image if the archive has one.
 - [x] Add support for vectors.

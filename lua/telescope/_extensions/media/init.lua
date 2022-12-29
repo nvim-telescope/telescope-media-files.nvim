@@ -21,26 +21,34 @@ local Job = require("plenary.job")
 local debug_utils = require("plenary.debug_utils")
 
 local scope = require("telescope._extensions.media.scope")
+local canned = require("telescope._extensions.media.canned")
 
+---This is the default configuration.
 local DEFAULTS = {
+  ---Dimensions of the preview ueberzug window.
   geometry = {
+    ---X-offset of the ueberzug window.
     x = -2,
+    ---Y-offset of the ueberzug window.
     y = -2,
+    ---Width of the ueberzug window.
     width = 1,
+    ---Height of the ueberzug window.
     height = 1,
   },
+  ---Command that will populate the finder. Any listing command or,
+  ---script is allowed. Like ripgrep, find, fd, ls, etc.
+  ---@warn Use unsupported filetypes at your own discretion.
   find_command = {
     "rg",
     "--no-config",
     "--files",
     "--glob",
-    [[*.{]] .. "png,jpg,gif,webp,jpeg" .. [[}]],
+    [[*.{]] .. table.concat(scope.SUP_FTYPE_FLAT, ",") .. [[}]],
     ".",
   },
-  on_confirm = function(filepath)
-    vim.fn.setreg(vim.v.register, filepath)
-    vim.notify("The image path has been copied!")
-  end,
+  on_confirm = canned.copy_path,
+  cache_path = "/tmp/tele.media.cache",
 }
 
 local SIGKILL = 9
@@ -57,20 +65,28 @@ local function setup(options)
   DEFAULTS = vim.tbl_deep_extend("keep", vim.F.if_nil(options, {}), DEFAULTS)
 end
 
+--[[I am thinking of something.
+  * How about we run a Ueberzug daemon process in the Previewer.setup
+    method and that said daemon will listen to a FIFO as a plenary.Job.
+  * And, Previewer.preview_fn method will send (write) the image metadata
+    to that file. The daemon will adjuest to the new changes and display
+    the new image.
+  * Lastly, The Previewer.teardown method will kill the daemon process.
+    We do not have to run the kill_process_all function if we did that!]]
+
 local media_preview = utils.make_default_callable(function(options)
   return previewers.new({
     preview_fn = function(_, entry, _)
       kill_process_all()
-
-      scope.create_cache("/tmp/tele.media.cache")
+      scope.create_cache(options.cache_path)
       local cached_file = vim.trim(entry.value)
-      if scope.is_supported(entry.value) then
-        cached_file = scope.cache_images(entry.value)
+      if scope.supports(entry.value) then
+        cached_file = scope.cache_images(entry.value, options.cache_path)
       end
 
       local preview = options.get_preview_window()
       local ueberzug = Job:new({
-        BASE_DIR .. "/scripts/view.py",
+        BASE_DIR .. "/scripts/view",
         cached_file,
         preview.col + options.geometry.x,
         preview.line + options.geometry.y,
@@ -112,6 +128,8 @@ local function media(options)
   if vim.o.laststatus ~= 0 then
     line_count = line_count - 1
   end
+
+  ---@diagnostic disable-next-line: undefined-field
   popup_options = picker:get_window_options(vim.o.columns, line_count)
   picker:find()
 end
