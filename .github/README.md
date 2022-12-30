@@ -2,14 +2,14 @@
 
 # telescope-media-files.nvim
 
+![demo](./demo.gif)
+
 Preview IMAGES, PDF, EPUB, VIDEO, and FONTS from Neovim using Telescope.
 Keep in mind that this is a rewrite so some filetypes are not yet supported.
 Lastly, opening an image for the first time will lag as it is creating caches
 in `/tmp/tele.media.cache` directory.
 
 </div>
-
-> NOTE: This plugin is only supported in Linux.
 
 ## SUPPORTS
 
@@ -20,6 +20,8 @@ Following are the filetypes that this picker supports.
 - SVG
 - WEBP
 - GIF
+
+> NOTE: This plugin is only supported in Linux.
 
 ## PACKER
 

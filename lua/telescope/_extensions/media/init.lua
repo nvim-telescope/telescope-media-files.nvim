@@ -17,8 +17,8 @@ local previewers = require("telescope.previewers")
 local config = require("telescope.config")
 local action_state = require("telescope.actions.state")
 
+local Ueberzug = require("telescope._extensions.media.ueberzug")
 local Job = require("plenary.job")
-local debug_utils = require("plenary.debug_utils")
 
 local scope = require("telescope._extensions.media.scope")
 local canned = require("telescope._extensions.media.canned")
@@ -51,59 +51,34 @@ local DEFAULTS = {
   cache_path = "/tmp/tele.media.cache",
 }
 
-local SIGKILL = 9
-local BASE_DIR = ""
-local PIDS = {}
-
-local function kill_process_all()
-  for _, PID in pairs(PIDS) do
-    vim.loop.kill(PID, SIGKILL)
-  end
-end
-
 local function setup(options)
   DEFAULTS = vim.tbl_deep_extend("keep", vim.F.if_nil(options, {}), DEFAULTS)
 end
 
---[[I am thinking of something.
-  * How about we run a Ueberzug daemon process in the Previewer.setup
-    method and that said daemon will listen to a FIFO as a plenary.Job.
-  * And, Previewer.preview_fn method will send (write) the image metadata
-    to that file. The daemon will adjuest to the new changes and display
-    the new image.
-  * Lastly, The Previewer.teardown method will kill the daemon process.
-    We do not have to run the kill_process_all function if we did that!]]
-
 local media_preview = utils.make_default_callable(function(options)
+  _G.UEBERZUG = Ueberzug:new(os.tmpname())
+  _G.UEBERZUG:listen()
   return previewers.new({
     preview_fn = function(_, entry, _)
-      kill_process_all()
       scope.create_cache(options.cache_path)
-      local cached_file = vim.trim(entry.value)
-      if scope.supports(entry.value) then
-        cached_file = scope.cache_images(entry.value, options.cache_path)
-      end
-
       local preview = options.get_preview_window()
-      local ueberzug = Job:new({
-        BASE_DIR .. "/scripts/view",
-        cached_file,
-        preview.col + options.geometry.x,
-        preview.line + options.geometry.y,
-        preview.width + options.geometry.width,
-        preview.height + options.geometry.height,
+      _G.UEBERZUG:send({
+        path = scope.redirector(vim.trim(entry.value), options.cache_path),
+        x = preview.col + options.geometry.x,
+        y = preview.line + options.geometry.y,
+        width = preview.width + options.geometry.width,
+        height = preview.height + options.geometry.height,
       })
-      ueberzug:start()
-      table.insert(PIDS, ueberzug.pid)
     end,
-    teardown = kill_process_all,
+    teardown = function()
+      _G.UEBERZUG:shutdown()
+      _G.UEBERZUG = nil
+    end,
   })
 end, {})
 
 local function media(options)
   options = vim.tbl_deep_extend("keep", vim.F.if_nil(options, {}), DEFAULTS)
-  BASE_DIR = vim.fn.fnamemodify(debug_utils.sourced_filepath(), ":h:h:h:h:h")
-
   options.attach_mappings = function(buffer)
     actions.select_default:replace(function()
       actions.close(buffer)
@@ -118,7 +93,7 @@ local function media(options)
   end
 
   local picker = pickers.new(options, {
-    prompt_title = "Media Files",
+    prompt_title = "Media",
     finder = finders.new_oneshot_job(options.find_command, options),
     previewer = media_preview.new(options),
     sorter = config.values.file_sorter(options),
