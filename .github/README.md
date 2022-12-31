@@ -16,10 +16,16 @@ in `/tmp/tele.media.cache` directory.
 Following are the filetypes that this picker supports.
 
 - PNG
-- JPG/JPEG
+- JPG
+- JPEG
+- JIFF
 - SVG
 - WEBP
 - GIF
+- OTF
+- TTF
+- WOFF
+- WOFF2
 
 > NOTE: This plugin is only supported in Linux.
 
@@ -79,8 +85,11 @@ lua require('telescope').extensions.media_files.media_files()
 
 ## Prerequisites
 
-- [ueberzug](https://github.com/seebye/ueberzug) (required for image support)
-- [ripgrep](https://github.com/BurntSushi/ripgrep)
+Some of these are optional.
+
+- [ueberzug](https://github.com/seebye/ueberzug) is required for viewing images.
+- [ripgrep](https://github.com/BurntSushi/ripgrep) is optional but we use it by default.
+- [fontforge](https://fontforge.org/en-US/) is for previewing fonts.
 
 ## TODOS
 
@@ -89,9 +98,9 @@ lua require('telescope').extensions.media_files.media_files()
 - [ ] Get first image if the archive has one.
 - [x] Add support for vectors.
 - [x] Add support for images.
-- [ ] Add support for fonts.
+- [x] Add support for fonts.
 - [ ] Add support for archives.
 - [ ] Add support for video thumbnails.
 - [ ] Add support for webpages.
 - [ ] Add support for audio covers.
-- [ ] Improve caching.
+- [x] Improve caching.

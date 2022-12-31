@@ -1,84 +1,152 @@
 local M = {}
 
-local fn = vim.fn
-local Path = require("plenary.path")
 local Job = require("plenary.job")
+local Path = require("plenary.path")
+local sha = require("telescope._extensions.media.sha")
+local fn = vim.fn
 
-M.SUP_FTYPE = {
-  IMAGE = { "png", "jpeg", "jpg", "gif", "webp" },
-}
+M.caches = {}
 
-M.SUP_FTYPE_FLAT = vim.tbl_flatten(vim.tbl_values(M.SUP_FTYPE))
+M.handlers = {}
 
-function M.supports(filepath, category)
-  if category then
-    return vim.tbl_contains(M.SUP_FTYPE[category:upper()], M.get_extension(filepath))
-  end
-  return vim.tbl_contains(M.SUP_FTYPE_FLAT, M.get_extension(filepath))
+local function encode_name(filepath, inode)
+  return sha.sha512(inode .. filepath):upper()
 end
 
-function M.get_extension(filepath)
-  return fn.fnamemodify(filepath, ":e")
-end
-
-function M.get_filename(filepath)
-  return fn.fnamemodify(filepath, ":t:r")
-end
-
-function M.create_cache(cache_path)
-  cache_path = Path:new(cache_path)
-  if not cache_path:is_dir() then
-    cache_path:mkdir({ exists_ok = true, parents = true })
-  end
-
-  for subcache, _ in pairs(M.SUP_FTYPE) do
-    local path = Path:new(cache_path .. "/" .. subcache)
-    if not path:is_dir() then
-      path:mkdir({ exists_ok = true, parents = true })
+function M.load_caches(cache_path)
+  if cache_path:is_dir() then
+    local files = fn.readdir(cache_path.filename)
+    for _, file in ipairs(files) do
+      M.caches[file] = true
     end
-  end
-  return cache_path
-end
-
-function M.delete_cache(cache_path)
-  local cached_path = Path:new(cache_path)
-  if cached_path:is_dir() then
-    cached_path:rm({ recursive = true })
+  else
+    cache_path:mkdir({ parents = true, exists_ok = true })
   end
 end
 
-function M.redirector(filepath, cache_path, options)
-  if M.supports(filepath, "IMAGE") then
-    return M.handle_image(filepath, cache_path, options)
+function M.handlers.PNG(image_path, cache_path, options)
+  local sha_path = encode_name(image_path, vim.loop.fs_stat(image_path).ino) .. ".jpg"
+  local cached_path = cache_path.filename .. "/" .. sha_path
+  if M.caches[sha_path] then
+    return cached_path
   end
-end
 
-function M.handle_image(image_path, cache_path, options)
-  local defaults = vim.tbl_extend("keep", vim.F.if_nil(options, {}), {
-    quality = "25%",
+  options = vim.tbl_extend("keep", options, {
+    quality = "20%",
     blurred = "0.06",
+    interlace = "Plane",
   })
-
-  local cached_path = string.format("%s/IMAGE/%s.jpg", cache_path, M.get_filename(image_path))
-  if not Path:new(cached_path):is_file() then
-    Job:new({
-      command = "/usr/bin/convert",
-      args = {
-        "-strip",
-        "-interlace",
-        "Plane",
-        "-gaussian-blur",
-        defaults.blurred,
-        "-quality",
-        defaults.quality,
-        image_path,
-        cached_path,
-      },
-    }):start()
-    return image_path
-  end
-  return cached_path
+  Job:new({
+    command = "convert",
+    args = {
+      "-strip",
+      "-interlace",
+      options.interlace,
+      "-gaussian-blur",
+      options.blurred,
+      "-quality",
+      options.quality,
+      image_path,
+      cached_path,
+    },
+    interactive = false,
+    enable_handlers = false,
+    enable_recording = false,
+    on_exit = function(_, code, _)
+      if code == 0 then
+        M.caches[sha_path] = true
+      end
+    end,
+  }):start()
+  return image_path
 end
+
+M.handlers.JPG = M.handlers.PNG
+M.handlers.JPEG = M.handlers.PNG
+M.handlers.SVG = M.handlers.PNG
+M.handlers.WEBP = M.handlers.PNG
+M.handlers.JPG = M.handlers.PNG
+M.handlers.BMP = M.handlers.PNG
+M.handlers.JIFF = M.handlers.PNG
+
+function M.handlers.OTF(font_path, cache_path, options)
+  local sha_path = encode_name(font_path, vim.loop.fs_stat(font_path).ino) .. ".jpg"
+  local cached_path = cache_path.filename .. "/" .. sha_path
+  if M.caches[sha_path] then
+    return cached_path
+  end
+
+  options = vim.tbl_extend("keep", options, {
+    quality = "90%",
+    blurred = "0.0",
+    interlace = "Plane",
+    width = "-1",
+    height = "-1",
+    text_lines = {
+      [[  ABCDEFGHIJKLMNOPQRSTUVWXYZ  ]],
+      [[  abcdefghijklmnopqrstuvwxyz  ]],
+      [[  0123456789.:,;(*!?') ff fl fi ffi ffl  ]],
+      [[  The quick brown fox jumps over the lazy dog.  ]],
+    },
+  })
+  Job:new({
+    command = "fontimage",
+    args = {
+      "--o",
+      cached_path .. ".png",
+      "--width",
+      options.width,
+      "--height",
+      options.height,
+      "--pixelsize",
+      "120",
+      "--fontname",
+      "--pixelsize",
+      "80",
+      "--text",
+      options.text_lines[1],
+      "--text",
+      options.text_lines[2],
+      "--text",
+      options.text_lines[3],
+      "--text",
+      options.text_lines[4],
+      font_path,
+    },
+    interactive = false,
+    enable_handlers = false,
+    enable_recording = false,
+    on_exit = function(result, _)
+      if result.code == 0 then
+        local image_path = Path:new(result.args[2])
+        Job:new({
+          command = "convert",
+          args = {
+            "-strip",
+            "-interlace",
+            options.interlace,
+            "-gaussian-blur",
+            options.blurred,
+            "-quality",
+            options.quality,
+            image_path.filename,
+            cached_path,
+          },
+          on_exit = function(_, code, _)
+            if code == 0 and image_path:is_file() then
+              M.caches[sha_path] = true
+              image_path:rm()
+            end
+          end,
+        }):start()
+      end
+    end,
+  }):start()
+end
+
+M.handlers.TTF = M.handlers.OTF
+M.handlers.WOFF = M.handlers.OTF
+M.handlers.WOFF2 = M.handlers.OTF
 
 return M
 

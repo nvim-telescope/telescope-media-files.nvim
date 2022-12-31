@@ -19,6 +19,7 @@ local action_state = require("telescope.actions.state")
 
 local Ueberzug = require("telescope._extensions.media.ueberzug")
 local Job = require("plenary.job")
+local Path = require("plenary.path")
 
 local scope = require("telescope._extensions.media.scope")
 local canned = require("telescope._extensions.media.canned")
@@ -44,7 +45,7 @@ local DEFAULTS = {
     "--no-config",
     "--files",
     "--glob",
-    [[*.{]] .. table.concat(scope.SUP_FTYPE_FLAT, ",") .. [[}]],
+    [[*.{]] .. table.concat(vim.tbl_map(string.lower, vim.tbl_keys(scope.handlers)), ",") .. [[}]],
     ".",
   },
   on_confirm = canned.copy_path,
@@ -56,19 +57,26 @@ local function setup(options)
 end
 
 local media_preview = utils.make_default_callable(function(options)
+  local cache_path = Path:new(options.cache_path)
   _G.UEBERZUG = Ueberzug:new(os.tmpname())
   _G.UEBERZUG:listen()
   return previewers.new({
     preview_fn = function(_, entry, _)
-      scope.create_cache(options.cache_path)
+      scope.load_caches(cache_path)
       local preview = options.get_preview_window()
-      _G.UEBERZUG:send({
-        path = scope.redirector(vim.trim(entry.value), options.cache_path),
-        x = preview.col + options.geometry.x,
-        y = preview.line + options.geometry.y,
-        width = preview.width + options.geometry.width,
-        height = preview.height + options.geometry.height,
-      })
+      local handler = scope.handlers[vim.fn.fnamemodify(entry.value, ":e"):upper()]
+      if handler then
+        _G.UEBERZUG:send({
+          path = handler(vim.fn.fnamemodify(entry.value, ":p"), cache_path, {
+            quality = "30%",
+            blurred = "0.02",
+          }),
+          x = preview.col + options.geometry.x,
+          y = preview.line + options.geometry.y,
+          width = preview.width + options.geometry.width,
+          height = preview.height + options.geometry.height,
+        })
+      end
     end,
     teardown = function()
       _G.UEBERZUG:shutdown()
