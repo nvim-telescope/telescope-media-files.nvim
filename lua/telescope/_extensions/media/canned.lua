@@ -1,3 +1,6 @@
+---@module "telescope._extensions.media.canned"
+
+-- Imports and file-local definitions. {{{
 local M = {}
 
 local scope = require("telescope._extensions.media.scope")
@@ -5,6 +8,7 @@ local Path = require("plenary.path")
 local Job = require("plenary.job")
 
 local fn = vim.fn
+-- }}}
 
 function M.copy_path(filepath, options)
   options = vim.tbl_extend("keep", vim.F.if_nil(options, {}), {
@@ -22,23 +26,25 @@ function M.copy_image(filepath, options)
 end
 
 function M.set_wallpaper(filepath, options)
-  vim.ui.select({
-    "SEAMLESS",
-    "TILE",
-    "SCALE",
-    "FILL",
-    "CENTER",
-  }, {
-    prompt = "Select background behavior:",
-    format_item = function(item)
-      return "Set background behavior to " .. item
-    end,
-  }, function(choice)
-    Job:new(vim.tbl_extend("keep", vim.F.if_nil(options, {}), {
-      command = "/usr/bin/feh",
-      args = { "--bg-" .. choice:lower(), filepath },
-    })):start()
-  end)
+  vim.ui.select(
+    {
+      "SEAMLESS",
+      "TILE",
+      "SCALE",
+      "FILL",
+      "CENTER",
+    },
+    {
+      prompt = "Select background behavior:",
+      format_item = function(item) return "Set background behavior to " .. item end,
+    },
+    function(choice)
+      Job:new(vim.tbl_extend("keep", vim.F.if_nil(options, {}), {
+        command = "/usr/bin/feh",
+        args = { "--bg-" .. choice:lower(), filepath },
+      })):start()
+    end
+  )
 end
 
 function M.open_path(filepath, options)

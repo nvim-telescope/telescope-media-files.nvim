@@ -1,3 +1,6 @@
+---@module "telescope._extensions.media.init"
+
+-- Imports and file-local definitions. {{{
 local present, telescope = pcall(require, "telescope")
 
 if not present then
@@ -17,13 +20,18 @@ local previewers = require("telescope.previewers")
 local config = require("telescope.config")
 local action_state = require("telescope.actions.state")
 
-local Ueberzug = require("telescope._extensions.media.ueberzug")
+local Ueberzug = require("telescope._extensions.media.backends.ueberzug")
 local Job = require("plenary.job")
 local Path = require("plenary.path")
 
 local scope = require("telescope._extensions.media.scope")
 local canned = require("telescope._extensions.media.canned")
 
+local F = vim.F
+local fn = vim.fn
+-- }}}
+
+-- The default configuration. {{{
 ---This is the default configuration.
 local DEFAULTS = {
   ---Dimensions of the preview ueberzug window.
@@ -51,23 +59,25 @@ local DEFAULTS = {
   on_confirm = canned.open_path,
   cache_path = "/tmp/tele.media.cache",
 }
+-- }}}
 
-local function setup(options)
-  DEFAULTS = vim.tbl_deep_extend("keep", vim.F.if_nil(options, {}), DEFAULTS)
-end
+-- Setup functions and previewer function. {{{
+local function setup(options) DEFAULTS = vim.tbl_deep_extend("keep", vim.F.if_nil(options, {}), DEFAULTS) end
 
 local media_preview = utils.make_default_callable(function(options)
   local cache_path = Path:new(options.cache_path)
-  _G.UEBERZUG = Ueberzug:new(os.tmpname())
-  _G.UEBERZUG:listen()
+  local UEBERZUG = Ueberzug:new(os.tmpname())
+  UEBERZUG:listen()
+
   return previewers.new({
     preview_fn = function(_, entry, _)
       scope.load_caches(cache_path)
       local preview = options.get_preview_window()
-      local handler = scope.supports[vim.fn.fnamemodify(entry.value, ":e"):upper()]
+      local handler = scope.supports[fn.fnamemodify(entry.value, ":e")]
+
       if handler then
-        _G.UEBERZUG:send({
-          path = handler(vim.fn.fnamemodify(entry.value, ":p"), cache_path, {
+        UEBERZUG:send({
+          path = handler(fn.fnamemodify(entry.value, ":p"), cache_path, {
             quality = "30%",
             blurred = "0.02",
           }),
@@ -79,14 +89,21 @@ local media_preview = utils.make_default_callable(function(options)
       end
     end,
     teardown = function()
-      _G.UEBERZUG:shutdown()
-      _G.UEBERZUG = nil
+      UEBERZUG:kill()
+      -- NOTE: I need some suggestions on how to do this better.
+      if _G.___RM_ZIP then
+        for _, ZIP in ipairs(_G.___RM_ZIP) do
+          ZIP:rm()
+        end
+      end
     end,
   })
 end, {})
+-- }}}
 
+-- Main driver function. {{{
 local function media(options)
-  options = vim.tbl_deep_extend("keep", vim.F.if_nil(options, {}), DEFAULTS)
+  options = vim.tbl_deep_extend("keep", F.if_nil(options, {}), DEFAULTS)
   options.attach_mappings = function(buffer)
     actions.select_default:replace(function()
       actions.close(buffer)
@@ -96,9 +113,7 @@ local function media(options)
   end
 
   local popup_options = {}
-  options.get_preview_window = function()
-    return popup_options.preview
-  end
+  options.get_preview_window = function() return popup_options.preview end
 
   local picker = pickers.new(options, {
     prompt_title = "Media",
@@ -108,14 +123,13 @@ local function media(options)
   })
 
   local line_count = vim.o.lines - vim.o.cmdheight
-  if vim.o.laststatus ~= 0 then
-    line_count = line_count - 1
-  end
+  if vim.o.laststatus ~= 0 then line_count = line_count - 1 end
 
   ---@diagnostic disable-next-line: undefined-field
   popup_options = picker:get_window_options(vim.o.columns, line_count)
   picker:find()
 end
+-- }}}
 
 return telescope.register_extension({
   setup = setup,

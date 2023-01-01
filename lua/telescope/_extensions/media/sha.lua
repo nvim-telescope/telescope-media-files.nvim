@@ -1,5 +1,7 @@
+---@module "telescope._extensions.media.sha"
 ---Stolen from https://gist.github.com/PedroAlvesV/ea80f6724df49ace29eed03e7f75b589
 
+-- Definitions and helper functions. {{{
 local unpack, table_concat, byte, char, string_rep, sub, string_format, floor, ceil, min, max =
   unpack,
   table.concat,
@@ -22,9 +24,7 @@ local AND, OR, XOR, SHL, SHR, ROL, ROR, HEX
 -- Only low 32 bits of function arguments matter, high bits are ignored
 -- The result of all functions (except HEX) is an integer (pair of integers) inside range 0..(2^32-1)
 
-function SHL(x, n)
-  return (x * 2 ^ n) % 4294967296
-end
+function SHL(x, n) return (x * 2 ^ n) % 4294967296 end
 
 function SHR(x, n)
   x = x % 4294967296 / 2 ^ n
@@ -77,30 +77,21 @@ local function and_or_xor(x, y, operation)
   rx = x % 65536 + y % 256
   res = res + AND_of_two_bytes[rx] * 65536
   res = res + AND_of_two_bytes[(x + y - rx) / 256] * 16777216
-  if operation then
-    res = x0 + y0 - operation * res
-  end
+  if operation then res = x0 + y0 - operation * res end
   return res
 end
 
-function AND(x, y)
-  return and_or_xor(x, y)
-end
+function AND(x, y) return and_or_xor(x, y) end
 
-function OR(x, y)
-  return and_or_xor(x, y, 1)
-end
+function OR(x, y) return and_or_xor(x, y, 1) end
 
 function XOR(x, y, z) -- 2 or 3 arguments
-  if z then
-    y = and_or_xor(y, z, 2)
-  end
+  if z then y = and_or_xor(y, z, 2) end
   return and_or_xor(x, y, 2)
 end
 
-function HEX(x)
-  return string_format("%08x", x % 4294967296)
-end
+function HEX(x) return string_format("%08x", x % 4294967296) end
+-- }}}
 
 -- Arrays of SHA2 "magic numbers"
 local sha2_K_lo, sha2_K_hi, sha2_H_lo, sha2_H_hi = {}, {}, {}, {}
@@ -437,24 +428,12 @@ local function sha512ext(width, text)
 end
 
 local sha2for51 = {
-  sha224 = function(text)
-    return sha256ext(224, text)
-  end, -- SHA-224
-  sha256 = function(text)
-    return sha256ext(256, text)
-  end, -- SHA-256
-  sha384 = function(text)
-    return sha512ext(384, text)
-  end, -- SHA-384
-  sha512 = function(text)
-    return sha512ext(512, text)
-  end, -- SHA-512
-  sha512_224 = function(text)
-    return sha512ext(224, text)
-  end, -- SHA-512/224
-  sha512_256 = function(text)
-    return sha512ext(256, text)
-  end, -- SHA-512/256
+  sha224 = function(text) return sha256ext(224, text) end, -- SHA-224
+  sha256 = function(text) return sha256ext(256, text) end, -- SHA-256
+  sha384 = function(text) return sha512ext(384, text) end, -- SHA-384
+  sha512 = function(text) return sha512ext(512, text) end, -- SHA-512
+  sha512_224 = function(text) return sha512ext(224, text) end, -- SHA-512/224
+  sha512_256 = function(text) return sha512ext(256, text) end, -- SHA-512/256
 }
 
 return sha2for51

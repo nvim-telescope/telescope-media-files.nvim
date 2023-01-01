@@ -1,4 +1,4 @@
----@module "telescope._extensions.media.ueberzug"
+---@module "telescope._extensions.media.backends.ueberzug"
 ---@diagnostic disable: undefined-field
 
 local Job = require("plenary.job")
@@ -49,15 +49,11 @@ function Ueberzug:new(fifo)
   return setmetatable({ fifo = fifo, task = ueberzug_task }, self)
 end
 
-function Ueberzug:listen()
-  self.task:start()
-end
+function Ueberzug:listen() self.task:start() end
 
-function Ueberzug:clean()
-  self.fifo:rm()
-end
+function Ueberzug:clean() self.fifo:rm() end
 
-function Ueberzug:shutdown()
+function Ueberzug:kill()
   assert(self.task, "Ueberzug task is not running!")
   vim.loop.kill(self.task.writer.pid, SIGKILL)
   self:clean()

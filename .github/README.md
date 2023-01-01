@@ -19,6 +19,9 @@ Following are the filetypes that this picker supports.
 
 <summary>Supported filetypes. I think.</summary>
 
+- MOBI
+- FB2
+- EPUB
 - PNG
 - JPG
 - JPEG
@@ -64,7 +67,7 @@ Following are the filetypes that this picker supports.
 
 ```lua
 use({
-  "nvim-telescope/telescope-media-files.nvim",
+  "dharmx/telescope-media.nvim",
   config = function()
     require("telescope").load_extension("media")
   end,
@@ -77,7 +80,7 @@ use({
 
 ## SETUP
 
-``` lua
+```lua
 require("telescope").load_extension("media")
 ```
 
@@ -86,6 +89,7 @@ require("telescope").load_extension("media")
 This extension should be configured using `extensions` field inside Telescope.
 
 ```lua
+--- this is optional
 require("telescope").setup({
   extensions = {
     media = {
@@ -122,12 +126,66 @@ Some of these are optional.
 - [ripgrep](https://github.com/BurntSushi/ripgrep) is optional but we use it by default.
 - [fontforge](https://fontforge.org/en-US/) is for viewing fonts.
 - [poppler-utils](https://poppler.freedesktop.org/) is for viewing PDFs.
+- [epub-thumbnailer](https://github.com/marianosimone/epub-thumbnailer) is for viewing EPUB.
+- [calibre](https://calibre-ebook.com) is for viewing EPUB, FF2 and MOBI.
 
 ## TODOS
 
+<details>
+
+<summary>This is getting out of hand.</summary>
+
+- [ ] Use image magick instead of fontforge for previewing fonts.
 - [ ] Add documentations, briefs and notes.
+- [ ] Recalibrate preview size when window is moved.
 - [ ] Add support for archives.
+  - [x] Add ZIP support.
+  - [ ] Add A Support.
+  - [ ] Add ACE Support.
+  - [ ] Add ALZ Support.
+  - [ ] Add ARC Support.
+  - [ ] Add ARJ Support.
+  - [ ] Add CAB Support.
+  - [ ] Add CPIO Support.
+  - [ ] Add DEB Support.
+  - [ ] Add JAR Support.
+  - [ ] Add LHA Support.
+  - [ ] Add LZH Support.
+  - [ ] Add LZMA Support.
+  - [ ] Add LZO Support.
+  - [ ] Add RPM Support.
+  - [ ] Add T7Z Support.
+  - [ ] Add TBZ Support.
+  - [ ] Add TBZ2 Support.
+  - [ ] Add TGZ Support.
+  - [ ] Add TLZ Support.
+  - [ ] Add TXZ Support.
+  - [ ] Add TZ Support.
+  - [ ] Add TZO Support.
+  - [ ] Add WAR Support.
+  - [ ] Add XPI Support.
+  - [ ] Add ZSupport.
+  - [ ] Add TAR support.
+  - [ ] Add GZ support.
+  - [ ] Add XZ support.
+  - [ ] Add RZ support.
+  - [ ] Add TAR support.
+  - [ ] Add 7Z support.
+  - [ ] Add BZ2 support.
+  - [ ] Add BZ support.
+  - [ ] Add LZ support.
+  - [ ] Add RAR support.
+- [ ] Add [viu](https://github.com/atanunq/viu) backend.
+- [ ] Add [feh](https://github.com/derf/feh) backend.
+- [ ] Add [sushi](https://github.com/GNOME/sushi) backend.
+- [ ] Add [klook](https://github.com/KDE/klook) backend.
+- [ ] Add [Image-viewer](https://github.com/torum/Image-viewer) backend.
 - [ ] Add support for webpages.
+- [ ] Add support for APK.
+- [ ] Add support for ISO.
+- [ ] Add default text preview.
+- [x] Add default image preview.
+- [x] Add support for ebooks.
 - [x] Add support for Ai/EPS.
 - [x] Add support for vectors.
 - [x] Add support for images.
@@ -137,3 +195,5 @@ Some of these are optional.
 - [x] Add support for pdfs.
 - [x] Add some canned functions for `config.on_confirm`.
 - [x] Improve caching.
+
+</details>
