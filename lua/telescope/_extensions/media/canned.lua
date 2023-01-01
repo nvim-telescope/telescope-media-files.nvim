@@ -44,7 +44,7 @@ end
 function M.open_path(filepath, options)
   options = vim.tbl_extend("force", vim.F.if_nil(options, {}), {
     command = "/usr/bin/xdg-open",
-    args = filepath,
+    args = { filepath },
   })
   Job:new(options):start()
 end

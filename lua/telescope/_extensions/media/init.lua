@@ -45,10 +45,10 @@ local DEFAULTS = {
     "--no-config",
     "--files",
     "--glob",
-    [[*.{]] .. table.concat(vim.tbl_map(string.lower, vim.tbl_keys(scope.handlers)), ",") .. [[}]],
+    [[*.{]] .. table.concat(scope.supports(), ",") .. [[}]],
     ".",
   },
-  on_confirm = canned.copy_path,
+  on_confirm = canned.open_path,
   cache_path = "/tmp/tele.media.cache",
 }
 
@@ -64,7 +64,7 @@ local media_preview = utils.make_default_callable(function(options)
     preview_fn = function(_, entry, _)
       scope.load_caches(cache_path)
       local preview = options.get_preview_window()
-      local handler = scope.handlers[vim.fn.fnamemodify(entry.value, ":e"):upper()]
+      local handler = scope.supports[vim.fn.fnamemodify(entry.value, ":e"):upper()]
       if handler then
         _G.UEBERZUG:send({
           path = handler(vim.fn.fnamemodify(entry.value, ":p"), cache_path, {
