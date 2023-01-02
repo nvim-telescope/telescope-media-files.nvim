@@ -8,6 +8,7 @@ local Path = require("plenary.path")
 local debug_utils = require("plenary.debug_utils")
 local sha = require("telescope._extensions.media.sha")
 local utils = require("telescope._extensions.media.utils")
+local scandir = require("plenary.scandir")
 
 local fn = vim.fn
 local uv = vim.loop
@@ -33,6 +34,20 @@ function M.load_caches(cache_path)
   else
     cache_path:mkdir({ parents = true, exists_ok = true })
   end
+end
+
+function M.cleanup(cache_path)
+  scandir.scan_dir(cache_path.filename, {
+    add_dirs = false,
+    hidden = true,
+    on_insert = function(path)
+      local stem = fn.fnamemodify(path, ":t:r")
+      if #stem ~= 128 then
+        path = Path:new(path)
+        if path:is_file() then path:rm() end
+      end
+    end,
+  })
 end
 
 ---@private
@@ -126,11 +141,7 @@ function M.handlers.epub_handler(epub_path, cache_path, options)
   end)
   return NO_PREVIEW
 end
--- }}}
 
--- A very long archive handler functions. This is really bad. {{{
--- tar --list --file
--- tar --extract --to-stdout --file "${FILE_PATH}" -- "$fn" > "${IMAGE_CACHE_PATH}"
 function M.handlers.zip_handler(zip_path, cache_path, options)
   local in_cache, sha_path, cached_path = _encode_options(zip_path, cache_path, options)
   if in_cache then return in_cache end
@@ -147,8 +158,6 @@ function M.handlers.zip_handler(zip_path, cache_path, options)
             local zip_item_path = cache_path / zip_item
             options.alias = zip_path
             handler(zip_item_path, cache_path, options)
-            _G.___RM_ZIP = _G.___RM_ZIP or {}
-            table.insert(_G.___RM_ZIP, zip_item_path)
           end)
           return
         end
@@ -162,6 +171,7 @@ end
 -- Adding handlers to supported filetypes. {{{
 M.supports["pdf"] = M.handlers.pdf_handler
 M.supports["zip"] = M.handlers.zip_handler
+M.supports["tar"] = M.handlers.tar_handler
 
 M.supports["gif"] = M.handlers.gif_handler
 M.supports["eps"] = M.handlers.gif_handler

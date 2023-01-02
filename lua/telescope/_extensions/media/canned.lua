@@ -10,6 +10,7 @@ local Job = require("plenary.job")
 local fn = vim.fn
 -- }}}
 
+-- Canned functions for single selection. {{{
 function M.copy_path(filepath, options)
   options = vim.tbl_extend("keep", vim.F.if_nil(options, {}), {
     name_mod = ":p",
@@ -54,6 +55,19 @@ function M.open_path(filepath, options)
   })
   Job:new(options):start()
 end
+-- }}}
+
+-- Canned functions for multiple selections. {{{
+function M.bulk_copy(entries, options)
+  options = vim.tbl_extend("keep", vim.F.if_nil(options, {}), {
+    name_mod = ":p",
+  })
+  vim.fn.setreg(
+    vim.v.register,
+    table.concat(vim.tbl_map(function(item) return fn.fnamemodify(item, options.name_mod) end, entries), "\n")
+  )
+end
+-- }}}
 
 return M
 

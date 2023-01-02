@@ -57,6 +57,7 @@ local DEFAULTS = {
     ".",
   },
   on_confirm = canned.open_path,
+  on_confirm_muliple = canned.bulk_copy,
   cache_path = "/tmp/tele.media.cache",
 }
 -- }}}
@@ -70,6 +71,7 @@ local media_preview = utils.make_default_callable(function(options)
   UEBERZUG:listen()
 
   return previewers.new({
+    setup = function() scope.cleanup(cache_path) end,
     preview_fn = function(_, entry, _)
       scope.load_caches(cache_path)
       local preview = options.get_preview_window()
@@ -88,15 +90,7 @@ local media_preview = utils.make_default_callable(function(options)
         })
       end
     end,
-    teardown = function()
-      UEBERZUG:kill()
-      -- NOTE: I need some suggestions on how to do this better.
-      if _G.___RM_ZIP then
-        for _, ZIP in ipairs(_G.___RM_ZIP) do
-          ZIP:rm()
-        end
-      end
-    end,
+    teardown = function() UEBERZUG:kill() end,
   })
 end, {})
 -- }}}
@@ -105,9 +99,16 @@ end, {})
 local function media(options)
   options = vim.tbl_deep_extend("keep", F.if_nil(options, {}), DEFAULTS)
   options.attach_mappings = function(buffer)
-    actions.select_default:replace(function()
+    actions.select_default:replace(function(prompt_buffer)
+      local current_picker = action_state.get_current_picker(prompt_buffer)
+      local selections = current_picker:get_multi_selection()
       actions.close(buffer)
-      options.on_confirm(action_state.get_selected_entry()[1])
+      if #selections < 2 then
+        options.on_confirm(action_state.get_selected_entry()[1])
+      else
+        selections = vim.tbl_map(function(item) return item[1] end, selections)
+        options.on_confirm_muliple(selections)
+      end
     end)
     return true
   end

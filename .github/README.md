@@ -135,55 +135,15 @@ Some of these are optional.
 
 <summary>This is getting out of hand.</summary>
 
-- [ ] Use image magick instead of fontforge for previewing fonts.
 - [ ] Add documentations, briefs and notes.
 - [ ] Recalibrate preview size when window is moved.
-- [ ] Add support for archives.
-  - [x] Add ZIP support.
-  - [ ] Add A Support.
-  - [ ] Add ACE Support.
-  - [ ] Add ALZ Support.
-  - [ ] Add ARC Support.
-  - [ ] Add ARJ Support.
-  - [ ] Add CAB Support.
-  - [ ] Add CPIO Support.
-  - [ ] Add DEB Support.
-  - [ ] Add JAR Support.
-  - [ ] Add LHA Support.
-  - [ ] Add LZH Support.
-  - [ ] Add LZMA Support.
-  - [ ] Add LZO Support.
-  - [ ] Add RPM Support.
-  - [ ] Add T7Z Support.
-  - [ ] Add TBZ Support.
-  - [ ] Add TBZ2 Support.
-  - [ ] Add TGZ Support.
-  - [ ] Add TLZ Support.
-  - [ ] Add TXZ Support.
-  - [ ] Add TZ Support.
-  - [ ] Add TZO Support.
-  - [ ] Add WAR Support.
-  - [ ] Add XPI Support.
-  - [ ] Add ZSupport.
-  - [ ] Add TAR support.
-  - [ ] Add GZ support.
-  - [ ] Add XZ support.
-  - [ ] Add RZ support.
-  - [ ] Add TAR support.
-  - [ ] Add 7Z support.
-  - [ ] Add BZ2 support.
-  - [ ] Add BZ support.
-  - [ ] Add LZ support.
-  - [ ] Add RAR support.
 - [ ] Add [viu](https://github.com/atanunq/viu) backend.
 - [ ] Add [feh](https://github.com/derf/feh) backend.
 - [ ] Add [sushi](https://github.com/GNOME/sushi) backend.
 - [ ] Add [klook](https://github.com/KDE/klook) backend.
 - [ ] Add [Image-viewer](https://github.com/torum/Image-viewer) backend.
-- [ ] Add support for webpages.
-- [ ] Add support for APK.
-- [ ] Add support for ISO.
 - [ ] Add default text preview.
+- [x] Add support for ZIPs.
 - [x] Add default image preview.
 - [x] Add support for ebooks.
 - [x] Add support for Ai/EPS.
@@ -195,5 +155,15 @@ Some of these are optional.
 - [x] Add support for pdfs.
 - [x] Add some canned functions for `config.on_confirm`.
 - [x] Improve caching.
+- [x] Use image magick instead of fontforge for previewing fonts.
 
 </details>
+
+Note that currently, I have decied to stay far away from any `rm` stuff.
+Whether be functions like `plenery.Path.rm` or running `rm` on `vim.fn.system`.
+Secondly, I am revoking font support and will add it after I rewrite the
+`font_handler` function that uses `imagemagick` instead of `fontforge`.
+
+The main reason is that, `telescope.nvim` won't be able to remove the temporary
+files after `nvim` gets killed. Doing `:q` or, whatever is fine but, temporary
+files will remain if it is abruptly closed.
