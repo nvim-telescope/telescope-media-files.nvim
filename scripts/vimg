@@ -69,6 +69,16 @@ function draw_preview {
       render_at_size "${5}" "${6}" "${2}" "${7}"
       # viu -b -w ${5} -h ${6} "${2}"
 
+    elif [[ "$1" == "svgpreview" ]]; then
+      path="${2##*/}"
+      echo -e "Loading preview..\nFile: $path"
+      # Convert svg to png and then render.
+      # The picture is sized 2x bigger and a pixel density of 1200 is added during
+      # conversion to force a resize with good quality
+      [[ ! -f "${TMP_FOLDER}/${path}.png" ]] && magick -density 1200 -resize 200 "$2" "${TMP_FOLDER}/${path}.png"
+      clear
+      render_at_size "${5}" "${6}" "${TMP_FOLDER}/${path}.png" "${7}"
+
     elif [[ "$1" == "gifpreview" ]]; then
       # This is static for now, feel free to re-introduce FIFO to make
       # animations work again, plaing viu gifs (removing the -s flag) causes
@@ -100,6 +110,10 @@ function parse_options {
     case $extension in
     jpg | png | jpeg | webp)
         draw_preview  imagepreview "$1" $2 $3 $4 $5 $6
+    ;;
+
+    svg)
+        draw_preview svgpreview "$1" $2 $3 $4 $5 $6
     ;;
 
     gif)
