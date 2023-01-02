@@ -8,76 +8,24 @@ declare -x PREVIEW_ID="preview"
 declare -x TMP_FOLDER="/tmp/vimg"
 mkdir -p $TMP_FOLDER
 
-function calculate_size {
-  if ! command -v bc &> /dev/null; then
-    echo "the basic unix tool bc (basic calculator) could not be found in your path,\nplease install it to display media content"
-    exit
-  fi
-
-  # grab vars
-  max_width="${1}"
-  max_height="${2}"
-  img_width="${3}"
-  img_height="${4}"
-  img_stretch="${5}"
-
-  # image width times a multiplier since in most terminals the line height is bigger than the mono-spaced character width
-  stretched_width=$(echo "scale=20; ${img_width} * (${img_stretch} / 100)" | bc)
-
-  width_ratio=$(echo "scale=20; ${max_width} / ${stretched_width}" | bc)
-  height_ratio=$(echo "scale=20; ${max_height} / ${img_height}" | bc)
-  both_ratios=("${width_ratio}" "${height_ratio}")
-  best_ratio=$(printf "%.20f\n" "${both_ratios[@]}" | sort -t. -k 1,1n -k 2,2n -k 3,3n -k 4,4n | head -n 1)
-
-  new_width=$(echo "${stretched_width} * ${best_ratio}" | bc)
-  new_height=$(echo "${img_height} * ${best_ratio}" | bc)
-  echo "$(printf "%.0f" "$new_width") $(printf "%.0f" "$new_height")"
-}
-
 function render_at_size {
-  if ! command -v identify &> /dev/null; then
-    echo "identify (part of imagemagick) could not be found in your path,\nplease install it to display media content"
-    exit
-  fi
-
   max_width="${1}"
   max_height="${2}"
   img_path="${3}"
-  img_stretch="${4}"
 
-  # Requires imagemagick's identify command
-  img_width=$(identify -format "%w" "${img_path}")
-  img_height=$(identify -format "%h" "${img_path}")
-
-  # Get dimensions from and push them into an array
-  local raw_dimensions=$(calculate_size "${max_width}" "${max_height}" "${img_width}" "${img_height}" "${img_stretch}")
-  dimensions=($raw_dimensions)
-  new_width="${dimensions[0]}"
-  new_height="${dimensions[1]}"
-
-  # -s makes gifs static
-  viu -b -s -w "${new_width}" -h "${new_height}" "${img_path}"
+  # animation is turned off as it does werid things with the terminal output
+  chafa --animate=off --center=on --clear --size "${max_width}x${max_height}" "${img_path}"
 }
 
 function draw_preview {
-    if ! command -v viu &> /dev/null; then
-      echo "VIU could not be found in your path,\nplease install it to display media content"
+    if ! command -v chafa &> /dev/null; then
+      echo "chafa could not be found in your path,\nplease install it to display media content"
       exit
     fi
 
     if [[ "$1" == "imagepreview" ]]; then
       render_at_size "${5}" "${6}" "${2}" "${7}"
       # viu -b -w ${5} -h ${6} "${2}"
-
-    elif [[ "$1" == "svgpreview" ]]; then
-      path="${2##*/}"
-      echo -e "Loading preview..\nFile: $path"
-      # Convert svg to png and then render.
-      # The picture is sized 2x bigger and a pixel density of 1200 is added during
-      # conversion to force a resize with good quality
-      [[ ! -f "${TMP_FOLDER}/${path}.png" ]] && magick -density 1200 -resize 200 "$2" "${TMP_FOLDER}/${path}.png"
-      clear
-      render_at_size "${5}" "${6}" "${TMP_FOLDER}/${path}.png" "${7}"
 
     elif [[ "$1" == "gifpreview" ]]; then
       # This is static for now, feel free to re-introduce FIFO to make
@@ -108,12 +56,8 @@ function draw_preview {
 function parse_options {
     extension="${1##*.}"
     case $extension in
-    jpg | png | jpeg | webp)
+    jpg | png | jpeg | webp | svg)
         draw_preview  imagepreview "$1" $2 $3 $4 $5 $6
-    ;;
-
-    svg)
-        draw_preview svgpreview "$1" $2 $3 $4 $5 $6
     ;;
 
     gif)
