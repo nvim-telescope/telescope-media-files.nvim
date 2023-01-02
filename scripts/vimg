@@ -89,7 +89,7 @@ function draw_preview {
     elif [[ "$1" == "pdfpreview" ]]; then
       path="${2##*/}"
         echo -e "Loading preview..\nFile: $path"
-        [[ ! -f "${TMP_FOLDER}/${path}.png" ]] && pdftoppm -png -singlefile "$2" "${TMP_FOLDER}/${path}"
+        [[ ! -f "${TMP_FOLDER}/${path}.png" ]] && pdftoppm -png -singlefile "$2" "${TMP_FOLDER}/${path}.png"
         clear
         render_at_size "${5}" "${6}" "${TMP_FOLDER}/${path}.png" "${7}"
     fi
