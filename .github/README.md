@@ -137,12 +137,10 @@ Some of these are optional.
 
 - [ ] Add documentations, briefs and notes.
 - [ ] Recalibrate preview size when window is moved.
-- [ ] Add [viu](https://github.com/atanunq/viu) backend.
-- [ ] Add [feh](https://github.com/derf/feh) backend.
-- [ ] Add [sushi](https://github.com/GNOME/sushi) backend.
-- [ ] Add [klook](https://github.com/KDE/klook) backend.
-- [ ] Add [Image-viewer](https://github.com/torum/Image-viewer) backend.
 - [ ] Add default text preview.
+- [x] Add [viu](https://github.com/atanunq/viu) backend.
+- [x] Add [jp2a](https://github.com/cslarsen/jp2a) backend.
+- [x] Add [chafa](https://github.com/hpjansson/chafa/) backend.
 - [x] Add support for ZIPs.
 - [x] Add default image preview.
 - [x] Add support for ebooks.
@@ -156,6 +154,7 @@ Some of these are optional.
 - [x] Add some canned functions for `config.on_confirm`.
 - [x] Improve caching.
 - [x] Use image magick instead of fontforge for previewing fonts.
+- [ ] Refactor and revise.
 
 </details>
 

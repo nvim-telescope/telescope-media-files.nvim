@@ -16,16 +16,15 @@ local utils = require("telescope.utils")
 local actions = require("telescope.actions")
 local finders = require("telescope.finders")
 local pickers = require("telescope.pickers")
-local previewers = require("telescope.previewers")
 local config = require("telescope.config")
 local action_state = require("telescope.actions.state")
 
-local Ueberzug = require("telescope._extensions.media.backends.ueberzug")
 local Job = require("plenary.job")
 local Path = require("plenary.path")
 
 local scope = require("telescope._extensions.media.scope")
 local canned = require("telescope._extensions.media.canned")
+local backends = require("telescope._extensions.media.backends")
 
 local F = vim.F
 local fn = vim.fn
@@ -56,6 +55,7 @@ local DEFAULTS = {
     [[*.{]] .. table.concat(scope.supports(), ",") .. [[}]],
     ".",
   },
+  backend = "viu",
   on_confirm = canned.open_path,
   on_confirm_muliple = canned.bulk_copy,
   cache_path = "/tmp/tele.media.cache",
@@ -67,31 +67,8 @@ local function setup(options) DEFAULTS = vim.tbl_deep_extend("keep", vim.F.if_ni
 
 local media_preview = utils.make_default_callable(function(options)
   local cache_path = Path:new(options.cache_path)
-  local UEBERZUG = Ueberzug:new(os.tmpname())
-  UEBERZUG:listen()
-
-  return previewers.new({
-    setup = function() scope.cleanup(cache_path) end,
-    preview_fn = function(_, entry, _)
-      scope.load_caches(cache_path)
-      local preview = options.get_preview_window()
-      local handler = scope.supports[fn.fnamemodify(entry.value, ":e")]
-
-      if handler then
-        UEBERZUG:send({
-          path = handler(fn.fnamemodify(entry.value, ":p"), cache_path, {
-            quality = "30%",
-            blurred = "0.02",
-          }),
-          x = preview.col + options.geometry.x,
-          y = preview.line + options.geometry.y,
-          width = preview.width + options.geometry.width,
-          height = preview.height + options.geometry.height,
-        })
-      end
-    end,
-    teardown = function() UEBERZUG:kill() end,
-  })
+  scope.load_caches(cache_path)
+  return backends[options.backend](options, cache_path)
 end, {})
 -- }}}
 

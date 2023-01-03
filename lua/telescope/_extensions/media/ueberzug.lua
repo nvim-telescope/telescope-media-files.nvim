@@ -7,10 +7,7 @@ local Path = require("plenary.path")
 local SIGKILL = 9
 local EXIT_SUCCESS = 0
 
----@alias Path Path
----@alias Job Job
-
----@class Ueberzug
+---@class Viu
 ---@field fifo Path
 ---@field task Job
 local Ueberzug = {}
