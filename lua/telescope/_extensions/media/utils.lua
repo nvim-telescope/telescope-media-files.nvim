@@ -15,8 +15,8 @@ local function Task(options)
   return task
 end
 
-function M.magick(input_path, output_path, opts, after)
-  opts = vim.tbl_extend("keep", opts, {
+function M.magick(input_path, output_path, options, after)
+  options = vim.tbl_extend("keep", options, {
     quality = "20%",
     blurred = "0.06",
     interlace = "Plane",
@@ -27,20 +27,20 @@ function M.magick(input_path, output_path, opts, after)
     args = {
       "-strip",
       "-interlace",
-      opts.interlace,
+      options.interlace,
       "-gaussian-blur",
-      opts.blurred,
+      options.blurred,
       "-quality",
-      opts.quality,
-      input_path .. opts.frame,
+      options.quality,
+      input_path .. options.frame,
       output_path,
     },
     on_exit = function(self, code, signal) after(self, code, signal) end,
   })
 end
 
-function M.fontimage(font_path, output_path, opts, after)
-  opts = vim.tbl_extend("keep", opts, {
+function M.fontimage(font_path, output_path, options, after)
+  options = vim.tbl_extend("keep", options, {
     fill = "#000000",
     background = "#FFFFFF",
     pointsize = "100",
@@ -56,18 +56,18 @@ function M.fontimage(font_path, output_path, opts, after)
     args = {
       "-size",
       "3000x1500",
-      "xc:" .. opts.background,
+      "xc:" .. options.background,
       "-gravity",
       "center",
       "-pointsize",
-      opts.pointsize,
+      options.pointsize,
       "-font",
       font_path,
       "-fill",
-      opts.fill,
+      options.fill,
       "-annotate",
       "+0+0",
-      table.concat(opts.text_lines, "\n"),
+      table.concat(options.text_lines, "\n"),
       "-flatten",
       output_path,
     },
@@ -75,8 +75,8 @@ function M.fontimage(font_path, output_path, opts, after)
   })
 end
 
-function M.ffmpeg(input_path, output_path, opts, after)
-  opts = vim.tbl_extend("keep", opts, {
+function M.ffmpeg(input_path, output_path, options, after)
+  options = vim.tbl_extend("keep", options, {
     map_start = "0:v",
     map_finish = "0:V?",
     loglevel = "8",
@@ -87,21 +87,21 @@ function M.ffmpeg(input_path, output_path, opts, after)
       "-i",
       input_path,
       "-map",
-      opts.map_start,
+      options.map_start,
       "-map",
-      opts.map_finish,
+      options.map_finish,
       "-c",
       "copy",
       "-v",
-      opts.loglevel,
+      options.loglevel,
       output_path,
     },
     on_exit = after,
   })
 end
 
-function M.ffmpegthumbnailer(input_path, output_path, opts, after)
-  opts = vim.tbl_extend("keep", opts, {})
+function M.ffmpegthumbnailer(input_path, output_path, options, after)
+  options = vim.tbl_extend("keep", options, {})
   return Task({
     command = "ffmpegthumbnailer",
     args = {
@@ -116,8 +116,8 @@ function M.ffmpegthumbnailer(input_path, output_path, opts, after)
   })
 end
 
-function M.pdftoppm(pdf_path, output_path, opts, after)
-  opts = vim.tbl_extend("keep", opts, {
+function M.pdftoppm(pdf_path, output_path, options, after)
+  options = vim.tbl_extend("keep", options, {
     scale_to_x = "-1",
     scale_to_y = "-1",
     first_page_to_print = "1",
@@ -127,13 +127,13 @@ function M.pdftoppm(pdf_path, output_path, opts, after)
     command = "pdftoppm",
     args = {
       "-f",
-      opts.first_page_to_print,
+      options.first_page_to_print,
       "-l",
-      opts.last_page_to_print,
+      options.last_page_to_print,
       "-scale-to-x",
-      opts.scale_to_x,
+      options.scale_to_x,
       "-scale-to-y",
-      opts.scale_to_y,
+      options.scale_to_y,
       "-singlefile",
       "-jpeg",
       "-tiffcompression",
@@ -145,21 +145,21 @@ function M.pdftoppm(pdf_path, output_path, opts, after)
   })
 end
 
-function M.epubthumbnailer(input_path, output_path, opts, after)
-  opts = vim.tbl_extend("keep", opts, { size = "2000" })
+function M.epubthumbnailer(input_path, output_path, options, after)
+  options = vim.tbl_extend("keep", options, { size = "2000" })
   return Task({
     command = "epub-thumbnailer",
     args = {
       input_path,
       output_path,
-      opts.size,
+      options.size,
     },
     on_exit = after,
   })
 end
 
-function M.ebookmeta(input_path, output_path, opts, after)
-  opts = vim.tbl_extend("keep", opts, { size = "2000" })
+function M.ebookmeta(input_path, output_path, options, after)
+  options = vim.tbl_extend("keep", options, { size = "2000" })
   return Task({
     command = "ebook-meta",
     args = {

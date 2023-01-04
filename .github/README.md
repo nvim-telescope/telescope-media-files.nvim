@@ -93,18 +93,27 @@ This extension should be configured using `extensions` field inside Telescope.
 require("telescope").setup({
   extensions = {
     media = {
+      ---@type string
+      backend = "ueberzug",
+      ---@type table<string, integer>
       geometry = {
-        x = -2,     ---integer
-        y = -2,     ---integer
-        width = 1,  ---integer
-        height = 1, ---integer
+        ---@type integer
+        x = -2,
+        ---@type integer
+        y = -2,
+        ---@type integer
+        width = 1,
+        ---@type integer
+        height = 1,
       },
-      find_command = { "rg", "--files", "--glob", "*.{png,jpg}", "." }, ---table
-      on_confirm = ---<CUSTOM_FUNCTION>
-                   ---canned.set_wallpaper
-                   ---canned.copy_path
-                   ---canned.copy_image
-                   ---canned.open_path,
+      ---@type table<string>
+      find_command = { "rg", "--files", "--glob", "*.{png,jpg}", "." },
+      ---@type fun(filepath: string, options: table)
+      on_confirm = function(filepath, options)
+        vim.fn.setreg(vim.v.register, vim.fn.fnamemodify(filepath, options.mod))
+      end,
+      ---@type fun(entries: table<string>, options: table)
+      on_confirm_muliple = require("telescope._extensions.media.canned").bulk_copy,
     },
 })
 ```
@@ -116,6 +125,17 @@ require("telescope").setup({
 
 "Using lua function
 lua require('telescope').extensions.media.media()
+lua << EOF
+require('telescope').extensions.media.media({ 
+  find_command = { 
+    "rg",
+    "--files",
+    "--glob",
+    "*.{png,jpg}",
+    "."
+  }
+})
+EOF
 ```
 
 ## Prerequisites
@@ -137,10 +157,10 @@ Some of these are optional.
 
 - [ ] Add documentations, briefs and notes.
 - [ ] Recalibrate preview size when window is moved.
-- [ ] Add default text preview.
-- [x] Add [viu](https://github.com/atanunq/viu) backend.
-- [x] Add [jp2a](https://github.com/cslarsen/jp2a) backend.
-- [x] Add [chafa](https://github.com/hpjansson/chafa/) backend.
+- [x] Add default text preview.
+- [ ] Add [viu](https://github.com/atanunq/viu) backend.
+- [ ] Add [jp2a](https://github.com/cslarsen/jp2a) backend.
+- [ ] Add [chafa](https://github.com/hpjansson/chafa/) backend.
 - [x] Add support for ZIPs.
 - [x] Add default image preview.
 - [x] Add support for ebooks.
@@ -157,12 +177,3 @@ Some of these are optional.
 - [ ] Refactor and revise.
 
 </details>
-
-Note that currently, I have decied to stay far away from any `rm` stuff.
-Whether be functions like `plenery.Path.rm` or running `rm` on `vim.fn.system`.
-Secondly, I am revoking font support and will add it after I rewrite the
-`font_handler` function that uses `imagemagick` instead of `fontforge`.
-
-The main reason is that, `telescope.nvim` won't be able to remove the temporary
-files after `nvim` gets killed. Doing `:q` or, whatever is fine but, temporary
-files will remain if it is abruptly closed.

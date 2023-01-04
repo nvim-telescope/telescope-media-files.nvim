@@ -18,13 +18,14 @@ local finders = require("telescope.finders")
 local pickers = require("telescope.pickers")
 local config = require("telescope.config")
 local action_state = require("telescope.actions.state")
+local make_entry = require("telescope.make_entry")
 
 local Job = require("plenary.job")
 local Path = require("plenary.path")
 
 local scope = require("telescope._extensions.media.scope")
 local canned = require("telescope._extensions.media.canned")
-local backends = require("telescope._extensions.media.backends")
+local media_previewer = require("telescope._extensions.media.preview")
 
 local F = vim.F
 local fn = vim.fn
@@ -44,17 +45,8 @@ local DEFAULTS = {
     ---Height of the ueberzug window.
     height = 1,
   },
-  ---Command that will populate the finder. Any listing command or,
-  ---script is allowed. Like ripgrep, find, fd, ls, etc.
-  ---@warn Use unsupported filetypes at your own discretion.
-  find_command = {
-    "rg",
-    "--no-config",
-    "--files",
-    "--glob",
-    [[*.{]] .. table.concat(scope.supports(), ",") .. [[}]],
-    ".",
-  },
+  ---Command to populate the finder.
+  find_command = { "rg", "--no-config", "--files", "--glob", "*.{*}", "." },
   backend = "viu",
   on_confirm = canned.open_path,
   on_confirm_muliple = canned.bulk_copy,
@@ -62,17 +54,9 @@ local DEFAULTS = {
 }
 -- }}}
 
--- Setup functions and previewer function. {{{
+-- Main driver function. {{{
 local function setup(options) DEFAULTS = vim.tbl_deep_extend("keep", vim.F.if_nil(options, {}), DEFAULTS) end
 
-local media_preview = utils.make_default_callable(function(options)
-  local cache_path = Path:new(options.cache_path)
-  scope.load_caches(cache_path)
-  return backends[options.backend](options, cache_path)
-end, {})
--- }}}
-
--- Main driver function. {{{
 local function media(options)
   options = vim.tbl_deep_extend("keep", F.if_nil(options, {}), DEFAULTS)
   options.attach_mappings = function(buffer)
@@ -91,19 +75,19 @@ local function media(options)
   end
 
   local popup_options = {}
-  options.get_preview_window = function() return popup_options.preview end
+  function options.get_preview_window() return popup_options.preview end
+  options.entry_maker = make_entry.gen_from_file(options)
 
   local picker = pickers.new(options, {
     prompt_title = "Media",
     finder = finders.new_oneshot_job(options.find_command, options),
-    previewer = media_preview.new(options),
+    previewer = media_previewer.new(options),
     sorter = config.values.file_sorter(options),
   })
 
   local line_count = vim.o.lines - vim.o.cmdheight
   if vim.o.laststatus ~= 0 then line_count = line_count - 1 end
 
-  ---@diagnostic disable-next-line: undefined-field
   popup_options = picker:get_window_options(vim.o.columns, line_count)
   picker:find()
 end

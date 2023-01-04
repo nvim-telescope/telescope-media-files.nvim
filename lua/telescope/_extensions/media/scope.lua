@@ -171,7 +171,6 @@ end
 -- Adding handlers to supported filetypes. {{{
 M.supports["pdf"] = M.handlers.pdf_handler
 M.supports["zip"] = M.handlers.zip_handler
-M.supports["tar"] = M.handlers.tar_handler
 
 M.supports["gif"] = M.handlers.gif_handler
 M.supports["eps"] = M.handlers.gif_handler
