@@ -1,10 +1,26 @@
+---@tag media
+
+---@config { ["name"] = "INTRODUCTION", ["field_heading"] = "Options", ["module"] = "telescope._extensions.media" }
+
+---@brief [[
+--- telescope-media.nvim is a telescope extension that allows you to view both media files
+--- and text files. It basically, combines the features of `find_files` and what this plugin
+--- used to be i.e. a image viewer.
+---
+--- The main idea at the moment is to extract covers, thumbnails embedded covers, etc from
+--- audio, video, etc. And, lower the quality and save them at a directory.
+--- We can then access those files and view them instead, all the while keeping the paths
+--- (entries) the same.
+--- Image files will only be degraded and we won't need to extract or, unzip anything (duh).
+---@brief ]]
+
 -- Imports and file-local definitions. {{{
 local present, telescope = pcall(require, "telescope")
 
 if not present then
   vim.api.nvim_notify("This plugin requires telescope.nvim!", vim.log.levels.ERROR, {
-    title = "telescope-media-files.nvim",
-    prompt_title = "telescope-media-files.nvim",
+    title = "telescope-media.nvim",
+    prompt_title = "telescope-media.nvim",
     icon = " ",
   })
   return
@@ -15,7 +31,9 @@ local actions = require("telescope.actions")
 local finders = require("telescope.finders")
 local pickers = require("telescope.pickers")
 local config = require("telescope.config")
+
 local action_state = require("telescope.actions.state")
+local actions_layout = require("telescope.actions.layout")
 local make_entry = require("telescope.make_entry")
 
 local Job = require("plenary.job")
@@ -31,7 +49,7 @@ local fn = vim.fn
 
 -- The default configuration. {{{
 ---This is the default configuration.
-local DEFAULTS = {
+local _TelescopeMediaConfig = {
   ---Dimensions of the preview ueberzug window.
   geometry = {
     ---X-offset of the ueberzug window.
@@ -43,25 +61,127 @@ local DEFAULTS = {
     ---Height of the ueberzug window.
     height = 1,
   },
-  ---Command to populate the finder.
-  find_command = { "rg", "--no-config", "--files", "--glob", "*.{*}", "." },
-  backend = "viu",
-  on_confirm = canned.open_path,
-  on_confirm_muliple = canned.bulk_copy,
+  find_command = {
+    "rg",
+    "--no-config",
+    "--files",
+    ".",
+  },
+  backend = "ueberzug",
+  on_confirm = canned.single.copy_path,
+  on_confirm_muliple = canned.multiple.bulk_copy,
   cache_path = "/tmp/tele.media.cache",
+  mappings = {
+    { "n", "p", actions_layout.toggle_preview },
+    { "n", "v", canned.actions.multiple_vsplit },
+    { "n", "s", canned.actions.multiple_split },
+    { "n", "f", actions_layout.cycle_layout_next },
+    { "n", "b", actions_layout.cycle_layout_prev },
+  },
+  results_title = "",
+  prompt_title = "",
+  previewer = nil,
+  theme = "ivy",
+  sorting_strategy = "ascending",
+  layout_strategy = "horizontal",
+  layout_config = {
+    preview_cutoff = 1,
+    width = function(_, max_columns, _) return math.min(max_columns, 120) end,
+    height = function(_, _, max_lines) return math.min(max_lines, 20) end,
+  },
+  border = true,
+  borderchars = {
+    prompt = { "─", "│", " ", "│", "╭", "╮", "│", "│" },
+    results = { "─", "│", "─", "│", "├", "┤", "╯", "╰" },
+    preview = { "─", "│", "─", "│", "╭", "╮", "╯", "╰" },
+  },
+  preview = {
+    title = "",
+    timeout = 250,
+    filesize = 35,
+    colorizer = true,
+    treesitter = true,
+    regex = true,
+    treesitter_lines = 1000,
+    regex_lines = 5000,
+    colorizer_lines = 5000,
+    check_mime_type = true,
+    window_options = {
+      wrap = false,
+      winhl = "Normal:TelescopePreviewNormal",
+      signcolumn = "no",
+      foldlevel = 100,
+      scrollbind = false,
+    },
+    mimeforce = {
+      "json",
+      "lua",
+      "xml",
+    },
+    filetype_detect = true,
+    fill = {
+      mime_disable = "",
+      not_text_mime = "",
+      permission_denied = "╱",
+      caching = "⎪",
+      file_limit = "ˆ",
+      timeout = "⦂",
+    },
+  },
 }
 -- }}}
 
--- Main driver function. {{{
-local function setup(options) DEFAULTS = vim.tbl_deep_extend("keep", vim.F.if_nil(options, {}), DEFAULTS) end
+-- Helpers {{{
+--- Find command helper.
+---@param options table plugin settings
+---@return table<string>|fun(options: table): table<string>
+---@see telescope.previewers.buffer_previewer
+local function find_command(options)
+  if options.find_command then
+    if type(options.find_command) == "function" then return options.find_command(options) end
+    return options.find_command
+  elseif 1 == fn.executable("rg") then
+    return { "rg", "--files", "--color", "never" }
+  elseif 1 == fn.executable("fd") then
+    return { "fd", "--type", "f", "--color", "never" }
+  elseif 1 == fn.executable("fdfind") then
+    return { "fdfind", "--type", "f", "--color", "never" }
+  elseif 1 == fn.executable("find") then
+    return { "find", ".", "-type", "f" }
+  elseif 1 == fn.executable("where") then
+    return { "where", "/r", ".", "*" }
+  end
+  error("Invalid command!", vim.log.levels.ERROR)
+end
+-- }}}
 
+-- Main driver function. {{{
+--- This function will be called by telescope when `load_extension` will be called.
+--- Essentially, this will fetch options from the `telescope.config.extensions.media`
+--- section. So, make sure to have that configured.
+---@param options table plugin settings
+---@private
+local function setup(options)
+  options = F.if_nil(options, {})
+  options.find_command = find_command(options)
+  _TelescopeMediaConfig = vim.tbl_deep_extend("keep", options, _TelescopeMediaConfig)
+end
+
+--- The main function that defines the picker.
+---@param options table plugin settings
+---@private
 local function media(options)
-  options = vim.tbl_deep_extend("keep", F.if_nil(options, {}), DEFAULTS)
-  options.attach_mappings = function(buffer)
+  options = F.if_nil(options, {})
+  options.attach_mappings = function(buffer, map)
+    for _, mapping in ipairs(options.mappings) do
+      map(mapping[1], mapping[2], mapping[3])
+    end
+
     actions.select_default:replace(function(prompt_buffer)
       local current_picker = action_state.get_current_picker(prompt_buffer)
       local selections = current_picker:get_multi_selection()
-      actions.close(buffer)
+
+      actions.close(prompt_buffer)
       if #selections < 2 then
         options.on_confirm(action_state.get_selected_entry()[1])
       else
@@ -72,9 +192,68 @@ local function media(options)
     return true
   end
 
+  -- we need to do this everytime because a new table might be passed
+  -- for example: one might want to run this through the cmdline or whatever
+  options = vim.tbl_deep_extend("keep", options, _TelescopeMediaConfig)
+  options.find_command = find_command(options)
+
+  -- Validate find_command {{{
+  ---@see telescope.previewers.buffer_previewer
+  local command = options.find_command[1]
+  if options.search_dirs then
+    for key, value in pairs(options.search_dirs) do
+      options.search_dirs[key] = fn.expand(value)
+    end
+  end
+
+  if command == "fd" or command == "fdfind" or command == "rg" then
+    if options.hidden then options.find_command[#options.find_command + 1] = "--hidden" end
+    if options.no_ignore then options.find_command[#options.find_command + 1] = "--no-ignore" end
+    if options.no_ignore_parent then options.find_command[#options.find_command + 1] = "--no-ignore-parent" end
+    if options.follow then options.find_command[#options.find_command + 1] = "-L" end
+    if options.search_file then
+      if command == "rg" then
+        options.find_command[#options.find_command + 1] = "-g"
+        options.find_command[#options.find_command + 1] = "*" .. options.search_file .. "*"
+      else
+        options.find_command[#options.find_command + 1] = options.search_file
+      end
+    end
+    if options.search_dirs then
+      if command ~= "rg" and not options.search_file then options.find_command[#options.find_command + 1] = "." end
+      vim.list_extend(options.find_command, options.search_dirs)
+    end
+  elseif command == "find" then
+    if not options.hidden then
+      table.insert(options.find_command, { "-not", "-path", "*/.*" })
+      options.find_command = vim.tbl_flatten(options.find_command)
+    end
+    if options.no_ignore ~= nil then
+      vim.notify("The 'no_ignore' key is not available for the 'find' command in 'find_files'.")
+    end
+    if options.no_ignore_parent ~= nil then
+      vim.notify("The 'no_ignore_parent' key is not available for the 'find' command in 'find_files'.")
+    end
+    if options.follow then table.insert(options.find_command, 2, "-L") end
+    if options.search_file then
+      table.insert(options.find_command, "-name")
+      table.insert(options.find_command, "*" .. options.search_file .. "*")
+    end
+    if options.search_dirs then
+      table.remove(options.find_command, 2)
+      for _, value in pairs(options.search_dirs) do
+        table.insert(options.find_command, 2, value)
+      end
+    end
+  end
+  -- }}}
+
   local popup_options = {}
+  ---get preview window geometry.
+  ---@return table
+  ---@private
   function options.get_preview_window() return popup_options.preview end
-  options.entry_maker = make_entry.gen_from_file(options)
+  options.entry_maker = make_entry.gen_from_file(options) -- support devicons
 
   local picker = pickers.new(options, {
     prompt_title = "Media",
@@ -92,6 +271,7 @@ end
 -- }}}
 
 -- Plugin registration. {{{
+-- TODO: Add presets like image_media, font_media, audio_media, etc.
 return telescope.register_extension({
   setup = setup,
   exports = {

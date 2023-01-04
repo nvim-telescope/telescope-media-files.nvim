@@ -1,4 +1,23 @@
----Stolen from https://gist.github.com/PedroAlvesV/ea80f6724df49ace29eed03e7f75b589
+---@tag media.sha
+
+---@config { ["name"] = "SHA", ["field_heading"] = "Options", ["module"] = "telescope._extensions.media.sha" }
+
+---@brief [[
+--- This module contains functions to calculate SHA2 digest.
+---    Supported hashes: SHA-224, SHA-256, SHA-384, SHA-512, SHA-512/224, SHA-512/256
+---    This is a pure-Lua module, compatible with Lua 5.1
+---    It works on Lua 5.1/5.2/5.3/5.4/LuaJIT, but it doesn't use benefits of Lua versions 5.2+
+---
+---    Input data may must be provided either as a whole string or as a sequence of substrings (chunk-by-chunk).
+---    Result (SHA2 digest) is a string of lowercase hex digits.
+---
+---    Simplest usage example:
+---       local your_hash = require("sha2for51").sha512("your string")
+---
+---    See file "sha2for51_test.lua" for more examples.
+---
+--- Stolen from https://gist.github.com/PedroAlvesV/ea80f6724df49ace29eed03e7f75b589
+---@brief ]]
 
 -- Definitions and helper functions. {{{
 local unpack, table_concat, byte, char, string_rep, sub, string_format, floor, ceil, min, max =
@@ -111,7 +130,7 @@ local function sha256_feed_64(H, K, str, W, offs, size)
       local a, b = W[j - 15], W[j - 2]
       W[j] = XOR(ROR(a, 7), ROL(a, 14), SHR(a, 3)) + XOR(ROL(b, 15), ROL(b, 13), SHR(b, 10)) + W[j - 7] + W[j - 16]
     end
-    local a, b, c, d, e, f, g, h, z = H[1], H[2], H[3], H[4], H[5], H[6], H[7], H[8]
+    local a, b, c, d, e, f, g, h, z = H[1], H[2], H[3], H[4], H[5], H[6], H[7], H[8], nil
     for j = 1, 64 do
       z = XOR(ROR(e, 6), ROR(e, 11), ROL(e, 7)) + AND(e, f) + AND(-1 - e, g) + h + K[j] + W[j]
       h = g
@@ -155,9 +174,9 @@ local function sha512_feed_128(H_lo, H_hi, K_lo, K_hi, str, W, offs, size)
       W[jj] = tmp2
     end
     local a_lo, b_lo, c_lo, d_lo, e_lo, f_lo, g_lo, h_lo, z_lo =
-      H_lo[1], H_lo[2], H_lo[3], H_lo[4], H_lo[5], H_lo[6], H_lo[7], H_lo[8]
+      H_lo[1], H_lo[2], H_lo[3], H_lo[4], H_lo[5], H_lo[6], H_lo[7], H_lo[8], nil
     local a_hi, b_hi, c_hi, d_hi, e_hi, f_hi, g_hi, h_hi, z_hi =
-      H_hi[1], H_hi[2], H_hi[3], H_hi[4], H_hi[5], H_hi[6], H_hi[7], H_hi[8]
+      H_hi[1], H_hi[2], H_hi[3], H_hi[4], H_hi[5], H_hi[6], H_hi[7], H_hi[8], nil
     for j = 1, 80 do
       local jj = 2 * j
       tmp1 = XOR(SHR(e_lo, 14) + SHL(e_hi, 18), SHR(e_lo, 18) + SHL(e_hi, 14), SHL(e_lo, 23) + SHR(e_hi, 9))

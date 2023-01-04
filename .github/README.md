@@ -2,7 +2,7 @@
 
 # telescope-media.nvim
 
-![demo](./demo.gif)
+https://user-images.githubusercontent.com/80379926/210888070-4715ee72-1352-492b-a14d-0ada212dac6d.mp4
 
 Preview IMAGES, PDF, EPUB, VIDEO, and FONTS from Neovim using Telescope.
 Keep in mind that this is a rewrite so some filetypes are not yet supported.
@@ -86,37 +86,62 @@ require("telescope").load_extension("media")
 
 ## CONFIG
 
-This extension should be configured using `extensions` field inside Telescope.
+This extension should be configured using the `extensions` field inside Telescope.
+However, you could also pass a table into the extension call.
 
 ```lua
 --- this is optional
 require("telescope").setup({
-  extensions = {
-    media = {
-      ---@type string
-      backend = "ueberzug",
-      ---@type boolean
-      disable_devicons = false,
-      ---@type table<string, integer>
-      geometry = {
-        ---@type integer
-        x = -2,
-        ---@type integer
-        y = -2,
-        ---@type integer
-        width = 1,
-        ---@type integer
-        height = 1,
-      },
-      ---@type table<string>
-      find_command = { "rg", "--files", "--glob", "*.{png,jpg}", "." },
-      ---@type fun(filepath: string, options?: table)
-      on_confirm = function(filepath, options)
-        vim.fn.setreg(vim.v.register, vim.fn.fnamemodify(filepath, options.mod))
-      end,
-      ---@type fun(entries: table<string>, options?: table)
-      on_confirm_muliple = require("telescope._extensions.media.canned").bulk_copy,
+  ---Dimensions of the preview ueberzug window.
+  geometry = {
+    ---X-offset of the ueberzug window.
+    x = -2,
+    ---Y-offset of the ueberzug window.
+    y = -2,
+    ---Width of the ueberzug window.
+    width = 1,
+    ---Height of the ueberzug window.
+    height = 1,
+  },
+  find_command = {
+    "rg",
+    "--no-config",
+    "--files",
+    ".",
+  },
+  backend = "ueberzug",
+  dynamic_preview_title = true,
+  on_confirm = canned.open_path,
+  on_confirm_muliple = canned.bulk_copy,
+  cache_path = "/tmp/tele.media.cache",
+  preview = {
+    title = "Previews",
+    filesize = 35,
+    enable_colorizer = true,
+    treesitter = true,
+    check_mime_type = true,
+    window_options = {
+      wrap = false,
+      winhl = "Normal:TelescopePreviewNormal",
+      signcolumn = "no",
+      foldlevel = 100,
+      scrollbind = false,
     },
+    mimeforce = {
+      "json",
+      "lua",
+      "xml",
+    },
+    filetype_detect = true,
+    fill = {
+      mime_disable = "",
+      not_text_mime = "",
+      permission_denied = "⦂",
+      caching = "⎪",
+      stat_nil = "╱",
+      file_limit = "ˆ",
+    },
+  },
 })
 ```
 
@@ -128,8 +153,8 @@ require("telescope").setup({
 "Using lua function
 lua require('telescope').extensions.media.media()
 lua << EOF
-require('telescope').extensions.media.media({ 
-  find_command = { 
+require('telescope').extensions.media.media({
+  find_command = {
     "rg",
     "--files",
     "--glob",
@@ -140,7 +165,7 @@ require('telescope').extensions.media.media({
 EOF
 ```
 
-## Prerequisites
+## PREREQUISITES
 
 Some of these are optional.
 
@@ -160,6 +185,8 @@ Some of these are optional.
 - [ ] Add documentations, briefs and notes.
 - [ ] Recalibrate preview size when window is moved.
 - [x] Add default text preview.
+- [ ] Render html files using elinks, pandoc, lynx and w3m.
+- [ ] Render markdown files using glow and pandoc.
 - [ ] Add [viu](https://github.com/atanunq/viu) backend.
 - [ ] Add [jp2a](https://github.com/cslarsen/jp2a) backend.
 - [ ] Add [chafa](https://github.com/hpjansson/chafa/) backend.
@@ -179,3 +206,11 @@ Some of these are optional.
 - [ ] Refactor and revise.
 
 </details>
+
+## CREDITS
+
+- [tembokk](https://github.com/tembokk)
+- [telescope](https://github.com/nvim-telescope)
+- [buffer_previewer](https://github.com/nvim-telescope/telescope.nvim/blob/master/lua/telescope/previewers/buffer_previewer.lua)
+- [ueberzug](https://github.com/seebye/ueberzug)
+- [lua-sha](https://gist.github.com/PedroAlvesV/ea80f6724df49ace29eed03e7f75b589)
