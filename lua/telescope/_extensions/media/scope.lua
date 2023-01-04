@@ -1,11 +1,7 @@
----@module "telescope._extensions.media.scope"
----@diagnostic disable: redefined-local
-
 -- Imports and file-local definitions. {{{
 local M = {}
 
 local Path = require("plenary.path")
-local debug_utils = require("plenary.debug_utils")
 local sha = require("telescope._extensions.media.sha")
 local utils = require("telescope._extensions.media.utils")
 local scandir = require("plenary.scandir")
@@ -13,8 +9,6 @@ local scandir = require("plenary.scandir")
 local fn = vim.fn
 local uv = vim.loop
 local F = vim.F
-
-local NO_PREVIEW = fn.fnamemodify(debug_utils.sourced_filepath(), ":h:h:h:h:h") .. "/.github/none.jpg"
 
 M.caches = {}
 M.handlers = {}
@@ -38,13 +32,13 @@ end
 
 function M.cleanup(cache_path)
   scandir.scan_dir(cache_path.filename, {
-    add_dirs = false,
+    add_dirs = true,
     hidden = true,
     on_insert = function(path)
       local stem = fn.fnamemodify(path, ":t:r")
       if #stem ~= 128 then
         path = Path:new(path)
-        if path:is_file() then path:rm() end
+        if path:exists() then path:rm() end
       end
     end,
   })
@@ -70,18 +64,10 @@ end
 function M.handlers.font_handler(font_path, cache_path, options)
   local in_cache, sha_path, cached_path = _encode_options(font_path, cache_path, options)
   if in_cache then return in_cache end
-  utils.fontimage(font_path, cached_path, options, function(self, _)
-    if self.code == 0 then
-      local image_path = Path:new(self.args[2])
-      utils.magick(image_path.filename, cached_path, options, function(_, code, _)
-        if code == 0 and image_path:is_file() then
-          M.caches[sha_path] = true
-          image_path:rm()
-        end
-      end)
-    end
+  utils.fontmagick(font_path, cached_path, options, function(self, _)
+    if self.code == 0 then M.caches[sha_path] = true end
   end)
-  return NO_PREVIEW
+  return vim.NIL
 end
 
 function M.handlers.video_handler(video_path, cache_path, options)
@@ -91,12 +77,12 @@ function M.handlers.video_handler(video_path, cache_path, options)
     if code == 0 then
       M.caches[sha_path] = true
     else
-      utils.ffmpegthumbnailer(video_path, cached_path, options, function(_, code, _)
-        if code == 0 then M.caches[sha_path] = true end
+      utils.ffmpegthumbnailer(video_path, cached_path, options, function(_, _code, _)
+        if _code == 0 then M.caches[sha_path] = true end
       end)
     end
   end)
-  return NO_PREVIEW
+  return vim.NIL
 end
 
 function M.handlers.gif_handler(gif_path, cache_path, options)
@@ -106,7 +92,7 @@ function M.handlers.gif_handler(gif_path, cache_path, options)
   utils.magick(gif_path, cached_path, options, function(_, code, _)
     if code == 0 then M.caches[sha_path] = true end
   end)
-  return NO_PREVIEW
+  return vim.NIL
 end
 
 function M.handlers.audio_handler(audio_path, cache_path, options)
@@ -115,7 +101,7 @@ function M.handlers.audio_handler(audio_path, cache_path, options)
   utils.ffmpeg(audio_path, cached_path, options, function(_, code, _)
     if code == 0 then M.caches[sha_path] = true end
   end)
-  return NO_PREVIEW
+  return vim.NIL
 end
 
 function M.handlers.pdf_handler(pdf_path, cache_path, options)
@@ -124,7 +110,7 @@ function M.handlers.pdf_handler(pdf_path, cache_path, options)
   utils.pdftoppm(pdf_path, cached_path, options, function(_, code, _)
     if code == 0 then M.caches[sha_path] = true end
   end)
-  return NO_PREVIEW
+  return vim.NIL
 end
 
 function M.handlers.epub_handler(epub_path, cache_path, options)
@@ -139,7 +125,7 @@ function M.handlers.epub_handler(epub_path, cache_path, options)
       end)
     end
   end)
-  return NO_PREVIEW
+  return vim.NIL
 end
 
 function M.handlers.zip_handler(zip_path, cache_path, options)
@@ -164,7 +150,7 @@ function M.handlers.zip_handler(zip_path, cache_path, options)
       end
     end
   end)
-  return NO_PREVIEW
+  return vim.NIL
 end
 -- }}}
 
@@ -217,8 +203,8 @@ M.supports["mogg"] = M.handlers.audio_handler
 M.supports["wav"] = M.handlers.audio_handler
 M.supports["cda"] = M.handlers.audio_handler
 M.supports["wma"] = M.handlers.audio_handler
--- }}}
 
 return M
+-- }}}
 
----vim:filetype=lua:fileencoding=utf-8
+-- vim:filetype=lua:fileencoding=utf-8

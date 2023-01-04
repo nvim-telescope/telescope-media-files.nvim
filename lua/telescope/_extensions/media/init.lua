@@ -1,5 +1,3 @@
----@module "telescope._extensions.media.init"
-
 -- Imports and file-local definitions. {{{
 local present, telescope = pcall(require, "telescope")
 
@@ -93,11 +91,13 @@ local function media(options)
 end
 -- }}}
 
+-- Plugin registration. {{{
 return telescope.register_extension({
   setup = setup,
   exports = {
     media = media,
   },
 })
+-- }}}
 
----vim:filetype=lua:fileencoding=utf-8
+-- vim:filetype=lua:fileencoding=utf-8

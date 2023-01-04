@@ -1,5 +1,3 @@
----@module "telescope._extensions.media.utils"
-
 local M = {}
 
 local Job = require("plenary.job")
@@ -15,6 +13,7 @@ local function Task(options)
   return task
 end
 
+-- Image related util functions. {{{
 function M.magick(input_path, output_path, options, after)
   options = vim.tbl_extend("keep", options, {
     quality = "20%",
@@ -39,7 +38,7 @@ function M.magick(input_path, output_path, options, after)
   })
 end
 
-function M.fontimage(font_path, output_path, options, after)
+function M.fontmagick(font_path, output_path, options, after)
   options = vim.tbl_extend("keep", options, {
     fill = "#000000",
     background = "#FFFFFF",
@@ -73,8 +72,9 @@ function M.fontimage(font_path, output_path, options, after)
     },
     on_exit = after,
   })
-end
+end -- }}}
 
+-- Video and audio related util functions. {{{
 function M.ffmpeg(input_path, output_path, options, after)
   options = vim.tbl_extend("keep", options, {
     map_start = "0:v",
@@ -115,7 +115,9 @@ function M.ffmpegthumbnailer(input_path, output_path, options, after)
     on_exit = after,
   })
 end
+-- }}}
 
+-- Document related util functions. {{{
 function M.pdftoppm(pdf_path, output_path, options, after)
   options = vim.tbl_extend("keep", options, {
     scale_to_x = "-1",
@@ -170,7 +172,9 @@ function M.ebookmeta(input_path, output_path, options, after)
     on_exit = after,
   })
 end
+-- }}}
 
+-- ZIP related util functions. {{{
 function M.zipinfo(input_path, after)
   return Task({
     command = "zipinfo",
@@ -190,5 +194,6 @@ function M.unzip(output_directory, zip_path, zip_item, after)
 end
 
 return M
+-- }}}
 
----vim:filetype=lua
+-- vim:filetype=lua:fileencoding=utf-8

@@ -1,4 +1,3 @@
----@module "telescope._extensions.media.sha"
 ---Stolen from https://gist.github.com/PedroAlvesV/ea80f6724df49ace29eed03e7f75b589
 
 -- Definitions and helper functions. {{{
@@ -437,3 +436,5 @@ local sha2for51 = {
 }
 
 return sha2for51
+
+-- vim:filetype=lua:fileencoding=utf-8

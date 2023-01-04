@@ -1,5 +1,3 @@
----@module "telescope._extensions.media.canned"
-
 -- Imports and file-local definitions. {{{
 local M = {}
 
@@ -67,8 +65,8 @@ function M.bulk_copy(entries, options)
     table.concat(vim.tbl_map(function(item) return fn.fnamemodify(item, options.name_mod) end, entries), "\n")
   )
 end
--- }}}
 
 return M
+-- }}}
 
----vim:filetype=lua
+-- vim:filetype=lua:fileencoding=utf-8

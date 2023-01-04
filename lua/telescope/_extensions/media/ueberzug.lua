@@ -1,6 +1,3 @@
----@module "telescope._extensions.media.backends.ueberzug"
----@diagnostic disable: undefined-field
-
 local Job = require("plenary.job")
 local Path = require("plenary.path")
 
@@ -73,4 +70,4 @@ end
 
 return Ueberzug
 
----vim:filetype=lua
+-- vim:filetype=lua:fileencoding=utf-8
