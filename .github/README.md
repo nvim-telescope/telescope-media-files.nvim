@@ -95,6 +95,8 @@ require("telescope").setup({
     media = {
       ---@type string
       backend = "ueberzug",
+      ---@type boolean
+      disable_devicons = false,
       ---@type table<string, integer>
       geometry = {
         ---@type integer
@@ -108,11 +110,11 @@ require("telescope").setup({
       },
       ---@type table<string>
       find_command = { "rg", "--files", "--glob", "*.{png,jpg}", "." },
-      ---@type fun(filepath: string, options: table)
+      ---@type fun(filepath: string, options?: table)
       on_confirm = function(filepath, options)
         vim.fn.setreg(vim.v.register, vim.fn.fnamemodify(filepath, options.mod))
       end,
-      ---@type fun(entries: table<string>, options: table)
+      ---@type fun(entries: table<string>, options?: table)
       on_confirm_muliple = require("telescope._extensions.media.canned").bulk_copy,
     },
 })
@@ -131,7 +133,7 @@ require('telescope').extensions.media.media({
     "rg",
     "--files",
     "--glob",
-    "*.{png,jpg}",
+    "*.{*}",
     "."
   }
 })
