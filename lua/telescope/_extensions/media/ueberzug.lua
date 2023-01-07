@@ -37,7 +37,7 @@ local Ueberzug = {}
 ---@param options table<TailOptions>? optional table that accepts Job handler functions.
 ---@return Job
 ---@private should I expose this?
-local function tail(fifo, options)
+local function _tail(fifo, options)
   options = vim.F.if_nil(options, {})
   return Job:new({
     command = "tail",
@@ -68,7 +68,7 @@ function Ueberzug:new(fifo)
       "--parser",
       "json", -- we have vim.json.(en|de)code which makes parsing dead simple
     },
-    writer = tail(fifo.filename), -- stdin supplier
+    writer = _tail(fifo.filename), -- stdin supplier
   })
 
   self.__index = self
@@ -115,6 +115,10 @@ function Ueberzug:send(message)
   -- /tmp/tele.media.cache becomes \/tmp\/tele.media.cache
   -- for some reason path string is escaped - so we attempt to remove the \
   self.fifo:write((vim.json.encode(message):gsub("\\", "")) .. "\n", "a")
+end
+
+function Ueberzug:hide()
+  self:send({ path = vim.NIL, x = 1, y = 1, width = 1, height = 1 })
 end
 
 return Ueberzug

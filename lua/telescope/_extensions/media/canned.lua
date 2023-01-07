@@ -127,7 +127,7 @@ function M.multiple.bulk_copy(entries, options)
   )
 end
 
-local function split(prompt_buffer, command)
+local function _split(prompt_buffer, command)
   local picker = actions_state.get_current_picker(prompt_buffer)
   local selections = picker:get_multi_selection()
   local entry = actions_state.get_selected_entry()
@@ -142,9 +142,9 @@ local function split(prompt_buffer, command)
   end
 end
 
-function M.actions.multiple_split(prompt_buffer) split(prompt_buffer, "split") end
+function M.actions.multiple_split(prompt_buffer) _split(prompt_buffer, "split") end
 
-function M.actions.multiple_vsplit(prompt_buffer) split(prompt_buffer, "vsplit") end
+function M.actions.multiple_vsplit(prompt_buffer) _split(prompt_buffer, "vsplit") end
 
 return M
 -- }}}

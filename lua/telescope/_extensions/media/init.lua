@@ -26,18 +26,13 @@ if not present then
   return
 end
 
-local utils = require("telescope.utils")
 local actions = require("telescope.actions")
 local finders = require("telescope.finders")
 local pickers = require("telescope.pickers")
 local config = require("telescope.config")
 
 local action_state = require("telescope.actions.state")
-local actions_layout = require("telescope.actions.layout")
 local make_entry = require("telescope.make_entry")
-
-local Job = require("plenary.job")
-local Path = require("plenary.path")
 
 local scope = require("telescope._extensions.media.scope")
 local canned = require("telescope._extensions.media.canned")
@@ -50,82 +45,19 @@ local fn = vim.fn
 -- The default configuration. {{{
 ---This is the default configuration.
 local _TelescopeMediaConfig = {
-  ---Dimensions of the preview ueberzug window.
-  geometry = {
-    ---X-offset of the ueberzug window.
-    x = -2,
-    ---Y-offset of the ueberzug window.
-    y = -2,
-    ---Width of the ueberzug window.
-    width = 1,
-    ---Height of the ueberzug window.
-    height = 1,
-  },
-  find_command = {
-    "rg",
-    "--no-config",
-    "--files",
-    ".",
-  },
   backend = "ueberzug",
   on_confirm = canned.single.copy_path,
   on_confirm_muliple = canned.multiple.bulk_copy,
   cache_path = "/tmp/tele.media.cache",
-  mappings = {
-    { "n", "p", actions_layout.toggle_preview },
-    { "n", "v", canned.actions.multiple_vsplit },
-    { "n", "s", canned.actions.multiple_split },
-    { "n", "f", actions_layout.cycle_layout_next },
-    { "n", "b", actions_layout.cycle_layout_prev },
-  },
+  preview_title = "",
   results_title = "",
-  prompt_title = "",
-  previewer = nil,
-  theme = "ivy",
-  sorting_strategy = "ascending",
-  layout_strategy = "horizontal",
-  layout_config = {
-    preview_cutoff = 1,
-    width = function(_, max_columns, _) return math.min(max_columns, 120) end,
-    height = function(_, _, max_lines) return math.min(max_lines, 20) end,
-  },
-  border = true,
-  borderchars = {
-    prompt = { "─", "│", " ", "│", "╭", "╮", "│", "│" },
-    results = { "─", "│", "─", "│", "├", "┤", "╯", "╰" },
-    preview = { "─", "│", "─", "│", "╭", "╮", "╯", "╰" },
-  },
+  prompt_title = "Media",
   preview = {
-    title = "",
-    timeout = 250,
-    filesize = 35,
-    colorizer = true,
-    treesitter = true,
-    regex = true,
-    treesitter_lines = 1000,
-    regex_lines = 5000,
-    colorizer_lines = 5000,
-    check_mime_type = true,
-    window_options = {
-      wrap = false,
-      winhl = "Normal:TelescopePreviewNormal",
-      signcolumn = "no",
-      foldlevel = 100,
-      scrollbind = false,
-    },
-    mimeforce = {
-      "json",
-      "lua",
-      "xml",
-    },
-    filetype_detect = true,
     fill = {
-      mime_disable = "",
-      not_text_mime = "",
-      permission_denied = "╱",
+      mime = "",
+      permission = "╱",
       caching = "⎪",
-      file_limit = "ˆ",
-      timeout = "⦂",
+      binary = "X",
     },
   },
 }
@@ -136,7 +68,7 @@ local _TelescopeMediaConfig = {
 ---@param options table plugin settings
 ---@return table<string>|fun(options: table): table<string>
 ---@see telescope.previewers.buffer_previewer
-local function find_command(options)
+local function _find_command(options)
   if options.find_command then
     if type(options.find_command) == "function" then return options.find_command(options) end
     return options.find_command
@@ -161,22 +93,18 @@ end
 --- section. So, make sure to have that configured.
 ---@param options table plugin settings
 ---@private
-local function setup(options)
+local function _setup(options)
   options = F.if_nil(options, {})
-  options.find_command = find_command(options)
+  options.find_command = _find_command(options)
   _TelescopeMediaConfig = vim.tbl_deep_extend("keep", options, _TelescopeMediaConfig)
 end
 
 --- The main function that defines the picker.
 ---@param options table plugin settings
 ---@private
-local function media(options)
+local function _media(options)
   options = F.if_nil(options, {})
   options.attach_mappings = function(buffer, map)
-    for _, mapping in ipairs(options.mappings) do
-      map(mapping[1], mapping[2], mapping[3])
-    end
-
     actions.select_default:replace(function(prompt_buffer)
       local current_picker = action_state.get_current_picker(prompt_buffer)
       local selections = current_picker:get_multi_selection()
@@ -195,7 +123,6 @@ local function media(options)
   -- we need to do this everytime because a new table might be passed
   -- for example: one might want to run this through the cmdline or whatever
   options = vim.tbl_deep_extend("keep", options, _TelescopeMediaConfig)
-  options.find_command = find_command(options)
 
   -- Validate find_command {{{
   ---@see telescope.previewers.buffer_previewer
@@ -273,9 +200,9 @@ end
 -- Plugin registration. {{{
 -- TODO: Add presets like image_media, font_media, audio_media, etc.
 return telescope.register_extension({
-  setup = setup,
+  setup = _setup,
   exports = {
-    media = media,
+    media = _media,
   },
 })
 -- }}}

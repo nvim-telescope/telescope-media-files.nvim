@@ -2,7 +2,7 @@
 
 # telescope-media.nvim
 
-https://user-images.githubusercontent.com/80379926/210888070-4715ee72-1352-492b-a14d-0ada212dac6d.mp4
+https://user-images.githubusercontent.com/80379926/211297245-a6463782-93bd-435a-8e11-3283872f0337.mp4
 
 Preview IMAGES, PDF, EPUB, VIDEO, and FONTS from Neovim using Telescope.
 Keep in mind that this is a rewrite so some filetypes are not yet supported.
@@ -90,58 +90,15 @@ This extension should be configured using the `extensions` field inside Telescop
 However, you could also pass a table into the extension call.
 
 ```lua
---- this is optional
 require("telescope").setup({
-  ---Dimensions of the preview ueberzug window.
-  geometry = {
-    ---X-offset of the ueberzug window.
-    x = -2,
-    ---Y-offset of the ueberzug window.
-    y = -2,
-    ---Width of the ueberzug window.
-    width = 1,
-    ---Height of the ueberzug window.
-    height = 1,
-  },
-  find_command = {
-    "rg",
-    "--no-config",
-    "--files",
-    ".",
-  },
-  backend = "ueberzug",
-  dynamic_preview_title = true,
-  on_confirm = canned.open_path,
-  on_confirm_muliple = canned.bulk_copy,
-  cache_path = "/tmp/tele.media.cache",
-  preview = {
-    title = "Previews",
-    filesize = 35,
-    enable_colorizer = true,
-    treesitter = true,
-    check_mime_type = true,
-    window_options = {
-      wrap = false,
-      winhl = "Normal:TelescopePreviewNormal",
-      signcolumn = "no",
-      foldlevel = 100,
-      scrollbind = false,
-    },
-    mimeforce = {
-      "json",
-      "lua",
-      "xml",
-    },
-    filetype_detect = true,
-    fill = {
-      mime_disable = "",
-      not_text_mime = "",
-      permission_denied = "⦂",
-      caching = "⎪",
-      stat_nil = "╱",
-      file_limit = "ˆ",
-    },
-  },
+  extensions = {
+    media = {
+      backend = "viu", -- "ueberzug"|"viu"|"chafa"|"jp2a"|catimg
+      on_confirm = canned.single.copy_path,
+      on_confirm_muliple = canned.multiple.bulk_copy,
+      cache_path = "/tmp/tele.media.cache",
+    }
+  }
 })
 ```
 
@@ -182,15 +139,16 @@ Some of these are optional.
 
 <summary>This is getting out of hand.</summary>
 
-- [ ] Add documentations, briefs and notes.
+- [x] Add documentations, briefs and notes.
 - [ ] Recalibrate preview size when window is moved.
 - [x] Add default text preview.
 - [ ] Render html files using elinks, pandoc, lynx and w3m.
 - [ ] Render markdown files using glow and pandoc.
-- [ ] Add [viu](https://github.com/atanunq/viu) backend.
-- [ ] Add [jp2a](https://github.com/cslarsen/jp2a) backend.
-- [ ] Add [chafa](https://github.com/hpjansson/chafa/) backend.
+- [x] Add [viu](https://github.com/atanunq/viu) backend.
+- [x] Add [jp2a](https://github.com/cslarsen/jp2a) backend.
+- [x] Add [chafa](https://github.com/hpjansson/chafa/) backend.
 - [x] Add support for ZIPs.
+- [x] Add support for binaries.
 - [x] Add default image preview.
 - [x] Add support for ebooks.
 - [x] Add support for Ai/EPS.

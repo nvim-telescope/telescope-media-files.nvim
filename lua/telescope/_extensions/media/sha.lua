@@ -78,7 +78,7 @@ for idx = 0, 65535 do
   AND_of_two_bytes[idx] = res
 end
 
-local function and_or_xor(x, y, operation)
+local function _and_or_xor(x, y, operation)
   -- operation: nil = AND, 1 = OR, 2 = XOR
   local x0 = x % 4294967296
   local y0 = y % 4294967296
@@ -99,13 +99,13 @@ local function and_or_xor(x, y, operation)
   return res
 end
 
-function AND(x, y) return and_or_xor(x, y) end
+function AND(x, y) return _and_or_xor(x, y) end
 
-function OR(x, y) return and_or_xor(x, y, 1) end
+function OR(x, y) return _and_or_xor(x, y, 1) end
 
 function XOR(x, y, z) -- 2 or 3 arguments
-  if z then y = and_or_xor(y, z, 2) end
-  return and_or_xor(x, y, 2)
+  if z then y = _and_or_xor(y, z, 2) end
+  return _and_or_xor(x, y, 2)
 end
 
 function HEX(x) return string_format("%08x", x % 4294967296) end
@@ -118,7 +118,7 @@ local sha2_H_ext512_lo, sha2_H_ext512_hi = { [384] = {}, [512] = sha2_H_lo }, { 
 
 local common_W = {} -- a temporary table shared between all calculations
 
-local function sha256_feed_64(H, K, str, W, offs, size)
+local function _sha256_feed_64(H, K, str, W, offs, size)
   -- offs >= 0, size >= 0, size is multiple of 64
   for pos = offs, size + offs - 1, 64 do
     for j = 1, 16 do
@@ -149,7 +149,7 @@ local function sha256_feed_64(H, K, str, W, offs, size)
   end
 end
 
-local function sha512_feed_128(H_lo, H_hi, K_lo, K_hi, str, W, offs, size)
+local function _sha512_feed_128(H_lo, H_hi, K_lo, K_hi, str, W, offs, size)
   -- offs >= 0, size >= 0, size is multiple of 128
   -- W1_hi, W1_lo, W2_hi, W2_lo, ...   Wk_hi = W[2*k-1], Wk_lo = W[2*k]
   for pos = offs, size + offs - 1, 128 do
@@ -250,7 +250,7 @@ end
 --------------------------------------------------------------------------------
 
 do
-  local function mul(src1, src2, factor, result_length)
+  local function _mul(src1, src2, factor, result_length)
     -- Long arithmetic multiplication: src1 * src2 * factor
     -- src1, src2 - long integers (arrays of digits in base 2^24)
     -- factor - short integer
@@ -285,15 +285,15 @@ do
       if d * d > p then
         idx = idx + 1
         local root = p ^ (1 / 3)
-        local R = mul({ floor(root * 2 ^ 40) }, one, 1, 2)
-        local _, delta = mul(R, mul(R, R, 1, 4), -1, 4)
+        local R = _mul({ floor(root * 2 ^ 40) }, one, 1, 2)
+        local _, delta = _mul(R, _mul(R, R, 1, 4), -1, 4)
         local hi = R[2] % 65536 * 65536 + floor(R[1] / 256)
         local lo = R[1] % 256 * 16777216 + floor(delta * (2 ^ -56 / 3) * root / p)
         sha2_K_hi[idx], sha2_K_lo[idx] = hi, lo
         if idx < 17 then
           root = p ^ (1 / 2)
-          R = mul({ floor(root * 2 ^ 40) }, one, 1, 2)
-          _, delta = mul(R, R, -1, 2)
+          R = _mul({ floor(root * 2 ^ 40) }, one, 1, 2)
+          _, delta = _mul(R, R, -1, 2)
           hi = R[2] % 65536 * 65536 + floor(R[1] / 256)
           lo = R[1] % 256 * 16777216 + floor(delta * 2 ^ -17 / root)
           sha2_H_ext256[224][idx + idx_disp] = lo
@@ -315,7 +315,7 @@ for width = 224, 256, 32 do
     H_lo[j] = XOR(sha2_H_lo[j], 0xa5a5a5a5)
     H_hi[j] = XOR(sha2_H_hi[j], 0xa5a5a5a5)
   end
-  sha512_feed_128(
+  _sha512_feed_128(
     H_lo,
     H_hi,
     sha2_K_lo,
@@ -333,25 +333,25 @@ end
 -- FINAL FUNCTIONS
 --------------------------------------------------------------------------------
 
-local function sha256ext(width, text)
+local function _sha256ext(width, text)
   -- Create an instance (private objects for current calculation)
   local H, length, tail = { unpack(sha2_H_ext256[width]) }, 0, ""
 
-  local function partial(text_part)
+  local function _partial(text_part)
     if text_part then
       if tail then
         length = length + #text_part
         local offs = 0
         if tail ~= "" and #tail + #text_part >= 64 then
           offs = 64 - #tail
-          sha256_feed_64(H, sha2_K_hi, tail .. sub(text_part, 1, offs), common_W, 0, 64)
+          _sha256_feed_64(H, sha2_K_hi, tail .. sub(text_part, 1, offs), common_W, 0, 64)
           tail = ""
         end
         local size = #text_part - offs
         local size_tail = size % 64
-        sha256_feed_64(H, sha2_K_hi, text_part, common_W, offs, size - size_tail)
+        _sha256_feed_64(H, sha2_K_hi, text_part, common_W, offs, size - size_tail)
         tail = tail .. sub(text_part, #text_part + 1 - size_tail)
-        return partial
+        return _partial
       else
         error("Adding more chunks is not allowed after asking for final result", 2)
       end
@@ -368,7 +368,7 @@ local function sha256ext(width, text)
           final_blocks[j] = char(floor(length))
         end
         final_blocks = table_concat(final_blocks)
-        sha256_feed_64(H, sha2_K_hi, final_blocks, common_W, 0, #final_blocks)
+        _sha256_feed_64(H, sha2_K_hi, final_blocks, common_W, 0, #final_blocks)
         local max_reg = width / 32
         for j = 1, max_reg do
           H[j] = HEX(H[j])
@@ -381,33 +381,33 @@ local function sha256ext(width, text)
 
   if text then
     -- Actually perform calculations and return the SHA256 digest of a message
-    return partial(text)()
+    return _partial(text)()
   else
     -- Return function for partial chunk loading
     -- User should feed every chunks of input data as single argument to this function and receive SHA256 digest by invoking this function without an argument
-    return partial
+    return _partial
   end
 end
 
-local function sha512ext(width, text)
+local function _sha512ext(width, text)
   -- Create an instance (private objects for current calculation)
   local length, tail, H_lo, H_hi = 0, "", { unpack(sha2_H_ext512_lo[width]) }, { unpack(sha2_H_ext512_hi[width]) }
 
-  local function partial(text_part)
+  local function _partial(text_part)
     if text_part then
       if tail then
         length = length + #text_part
         local offs = 0
         if tail ~= "" and #tail + #text_part >= 128 then
           offs = 128 - #tail
-          sha512_feed_128(H_lo, H_hi, sha2_K_lo, sha2_K_hi, tail .. sub(text_part, 1, offs), common_W, 0, 128)
+          _sha512_feed_128(H_lo, H_hi, sha2_K_lo, sha2_K_hi, tail .. sub(text_part, 1, offs), common_W, 0, 128)
           tail = ""
         end
         local size = #text_part - offs
         local size_tail = size % 128
-        sha512_feed_128(H_lo, H_hi, sha2_K_lo, sha2_K_hi, text_part, common_W, offs, size - size_tail)
+        _sha512_feed_128(H_lo, H_hi, sha2_K_lo, sha2_K_hi, text_part, common_W, offs, size - size_tail)
         tail = tail .. sub(text_part, #text_part + 1 - size_tail)
-        return partial
+        return _partial
       else
         error("Adding more chunks is not allowed after asking for final result", 2)
       end
@@ -423,7 +423,7 @@ local function sha512ext(width, text)
           final_blocks[j] = char(floor(length))
         end
         final_blocks = table_concat(final_blocks)
-        sha512_feed_128(H_lo, H_hi, sha2_K_lo, sha2_K_hi, final_blocks, common_W, 0, #final_blocks)
+        _sha512_feed_128(H_lo, H_hi, sha2_K_lo, sha2_K_hi, final_blocks, common_W, 0, #final_blocks)
         local max_reg = ceil(width / 64)
         for j = 1, max_reg do
           H_lo[j] = HEX(H_hi[j]) .. HEX(H_lo[j])
@@ -437,21 +437,21 @@ local function sha512ext(width, text)
 
   if text then
     -- Actually perform calculations and return the SHA256 digest of a message
-    return partial(text)()
+    return _partial(text)()
   else
     -- Return function for partial chunk loading
     -- User should feed every chunks of input data as single argument to this function and receive SHA256 digest by invoking this function without an argument
-    return partial
+    return _partial
   end
 end
 
 local sha2for51 = {
-  sha224 = function(text) return sha256ext(224, text) end, -- SHA-224
-  sha256 = function(text) return sha256ext(256, text) end, -- SHA-256
-  sha384 = function(text) return sha512ext(384, text) end, -- SHA-384
-  sha512 = function(text) return sha512ext(512, text) end, -- SHA-512
-  sha512_224 = function(text) return sha512ext(224, text) end, -- SHA-512/224
-  sha512_256 = function(text) return sha512ext(256, text) end, -- SHA-512/256
+  sha224 = function(text) return _sha256ext(224, text) end, -- SHA-224
+  sha256 = function(text) return _sha256ext(256, text) end, -- SHA-256
+  sha384 = function(text) return _sha512ext(384, text) end, -- SHA-384
+  sha512 = function(text) return _sha512ext(512, text) end, -- SHA-512
+  sha512_224 = function(text) return _sha512ext(224, text) end, -- SHA-512/224
+  sha512_256 = function(text) return _sha512ext(256, text) end, -- SHA-512/256
 }
 
 return sha2for51

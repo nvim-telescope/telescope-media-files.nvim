@@ -26,7 +26,7 @@ local fn = vim.fn
 ---@param options table: same as Job
 ---@return Job
 ---@private
-local function Task(options)
+local function _Task(options)
   local task = Job:new(vim.tbl_extend("keep", options, {
     interactive = false,
     enable_handlers = false,
@@ -52,7 +52,7 @@ function M.magick(input_path, output_path, options, on_exit)
     interlace = "Plane",
     frame = "[0]",
   })
-  return Task({
+  return _Task({
     command = "convert",
     args = {
       "-strip",
@@ -101,7 +101,7 @@ function M.fontmagick(font_path, output_path, options, on_exit)
       [[       (* *) /* */ [| |] {| |} ++ +++ \/ /\ |- -| <!-- <!---       ]],
     },
   })
-  return Task({
+  return _Task({
     command = "convert",
     args = {
       "-strip",
@@ -144,7 +144,7 @@ function M.ffmpeg(input_path, output_path, options, on_exit)
     map_finish = "0:V?",
     loglevel = "8",
   })
-  return Task({
+  return _Task({
     command = "ffmpeg",
     args = {
       "-i",
@@ -178,7 +178,7 @@ function M.ffmpegthumbnailer(input_path, output_path, options, on_exit)
     size = "0",
     time = "10%",
   })
-  return Task({
+  return _Task({
     command = "ffmpegthumbnailer",
     args = {
       "-i",
@@ -211,7 +211,7 @@ function M.pdftoppm(pdf_path, output_path, options, on_exit)
     first_page_to_print = "1",
     last_page_to_print = "1",
   })
-  return Task({
+  return _Task({
     command = "pdftoppm",
     args = {
       "-f",
@@ -243,7 +243,7 @@ end
 ---@return Job
 function M.epubthumbnailer(input_path, output_path, options, on_exit)
   options = vim.tbl_extend("keep", options, { size = "2000" })
-  return Task({
+  return _Task({
     command = "epub-thumbnailer",
     args = {
       input_path,
@@ -264,7 +264,7 @@ end
 ---@return Job
 function M.ebookmeta(input_path, output_path, options, on_exit)
   options = vim.tbl_extend("keep", options, { size = "2000" })
-  return Task({
+  return _Task({
     command = "ebook-meta",
     args = {
       "--get-cover",
@@ -283,7 +283,7 @@ end
 ---@param on_exit fun(self: Job, code: integer, signal: integer): nil function that will be run after the job finishes.
 ---@return Job
 function M.zipinfo(input_path, on_exit)
-  return Task({
+  return _Task({
     command = "zipinfo",
     args = { "-1", input_path },
     enable_recording = true,
@@ -299,7 +299,7 @@ end
 ---@param on_exit fun(self: Job, code: integer, signal: integer): nil function that will be run after the job finishes.
 ---@return Job
 function M.unzip(output_directory, zip_path, zip_item, on_exit)
-  return Task({
+  return _Task({
     command = "unzip",
     args = { "-d", output_directory, zip_path, zip_item },
     on_exit = on_exit,
