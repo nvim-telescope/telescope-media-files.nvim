@@ -20,11 +20,9 @@ local _task = util.get_os_command_output
 local _dialog = view_util.set_preview_message
 -- }}}
 
-local function _termopen(args, buffer, winid)
+local function _termopen(buffer, command)
   vim.schedule(function()
-    api.nvim_buf_call(buffer, function()
-      fn.termopen(args)
-    end)
+    api.nvim_buf_call(buffer, function() fn.termopen(command) end)
   end)
 end
 
@@ -52,13 +50,13 @@ local function _filetype_hook(filepath, buffer, options)
         height = window.height,
       })
     elseif options.backend == "viu" then
-      _termopen({ "viu", "-s", cached_file }, buffer, options.preview.winid)
+      _termopen(buffer, { "viu", "-s", cached_file })
     elseif options.backend == "chafa" then
-      _termopen({ "chafa", cached_file }, buffer, options.preview.winid)
+      _termopen(buffer, { "chafa", cached_file })
     elseif options.backend == "jp2a" then
-      _termopen({ "jp2a", "--colors", cached_file }, buffer, options.preview.winid)
+      _termopen(buffer, { "jp2a", "--colors", cached_file })
     elseif options.backend == "catimg" then
-      _termopen({ "catimg", cached_file }, buffer, options.preview.winid)
+      _termopen(buffer, { "catimg", cached_file })
     end
     return
   end
@@ -75,10 +73,10 @@ local function _filetype_hook(filepath, buffer, options)
       api.nvim_buf_set_lines(buffer, 0, -1, false, stdout)
       return false
     elseif extension == "md" then
-      _termopen({ "glow", "--style=auto", absolute }, buffer, options.preview.winid)
+      _termopen(buffer, { "glow", "--style=auto", absolute })
       return false
     elseif mime[2] == "html" then
-      _termopen({ "lynx", "-dump", absolute }, buffer, options.preview.winid)
+      _termopen(buffer, { "lynx", "-dump", absolute })
       return false
     elseif mime[1] == "text" or vim.tbl_contains({ "lua", "json" }, extension) then
       return true
@@ -104,14 +102,18 @@ local _MediaPreview = util.make_default_callable(function(options)
 
   return view.new_buffer_previewer({
     define_preview = function(self, entry, status)
-      uv.fs_access(entry.value, "R", vim.schedule_wrap(function(_, permission)
-        if permission then
-          options.preview.winid = status.preview_win
-          view.file_maker(entry.value, self.state.bufnr, options)
-          return
-        end
-        _dialog(self.state.bufnr, self.state.winid, "COULD NOT ACCESS FILE", options.preview.fill.permission)
-      end))
+      uv.fs_access(
+        entry.value,
+        "R",
+        vim.schedule_wrap(function(_, permission)
+          if permission then
+            options.preview.winid = status.preview_win
+            view.file_maker(entry.value, self.state.bufnr, options)
+            return
+          end
+          _dialog(self.state.bufnr, self.state.winid, "COULD NOT ACCESS FILE", options.preview.fill.permission)
+        end)
+      )
       if options.backend == "ueberzug" then options._ueberzug:hide() end
     end,
     setup = function(self)

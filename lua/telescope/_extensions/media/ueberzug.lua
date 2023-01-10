@@ -117,9 +117,7 @@ function Ueberzug:send(message)
   self.fifo:write((vim.json.encode(message):gsub("\\", "")) .. "\n", "a")
 end
 
-function Ueberzug:hide()
-  self:send({ path = vim.NIL, x = 1, y = 1, width = 1, height = 1 })
-end
+function Ueberzug:hide() self:send({ path = vim.NIL, x = 1, y = 1, width = 1, height = 1 }) end
 
 return Ueberzug
 

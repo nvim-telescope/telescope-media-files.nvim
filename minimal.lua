@@ -45,7 +45,7 @@ local function load_config()
     },
   })
 
-	---:lua MEDIA()
+  ---:lua MEDIA()
   function _G.MEDIA() require("telescope").extensions.media.media() end
 end
 
