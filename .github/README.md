@@ -140,10 +140,9 @@ Some of these are optional.
 <summary>This is getting out of hand.</summary>
 
 - [x] Add documentations, briefs and notes.
-- [ ] Recalibrate preview size when window is moved.
 - [x] Add default text preview.
-- [ ] Render html files using elinks, pandoc, lynx and w3m.
-- [ ] Render markdown files using glow and pandoc.
+- [x] Render html files using elinks, pandoc, lynx and w3m.
+- [x] Render markdown files using glow and pandoc.
 - [x] Add [viu](https://github.com/atanunq/viu) backend.
 - [x] Add [jp2a](https://github.com/cslarsen/jp2a) backend.
 - [x] Add [chafa](https://github.com/hpjansson/chafa/) backend.
@@ -161,6 +160,10 @@ Some of these are optional.
 - [x] Add some canned functions for `config.on_confirm`.
 - [x] Improve caching.
 - [x] Use image magick instead of fontforge for previewing fonts.
+- [ ] Add text/binary file handlers.
+- [ ] Add cwd support.
+- [ ] Add dialog boxes.
+- [ ] Recalibrate preview size when window is moved.
 - [ ] Refactor and revise.
 
 </details>

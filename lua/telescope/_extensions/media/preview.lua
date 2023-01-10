@@ -5,6 +5,7 @@ local Ueberzug = require("telescope._extensions.media.ueberzug")
 
 local util = require("telescope.utils")
 local state = require("telescope.state")
+local actions = require("telescope.actions")
 local view = require("telescope.previewers.buffer_previewer")
 local view_util = require("telescope.previewers.utils")
 local scope = require("telescope._extensions.media.scope")
@@ -19,13 +20,12 @@ local _task = util.get_os_command_output
 local _dialog = view_util.set_preview_message
 -- }}}
 
-local function _backend_proxy(buffer, args)
-  local terminal = vim.api.nvim_open_term(buffer, {})
-  fn.jobstart(args, {
-    on_stdout = function(_, data, _)
-      for _, datum in ipairs(data) do api.nvim_chan_send(terminal, datum .. "\r\n") end
-    end, stdout_buffered = true
-  })
+local function _termopen(args, buffer, winid)
+  vim.schedule(function()
+    api.nvim_buf_call(buffer, function()
+      fn.termopen(args)
+    end)
+  end)
 end
 
 local function _filetype_hook(filepath, buffer, options)
@@ -36,7 +36,9 @@ local function _filetype_hook(filepath, buffer, options)
   if handler then
     local cached_file = handler(absolute, options.cache_path, options)
     if cached_file == NULL then
-      _dialog(buffer, options.preview.winid, "CACHING ITEM", options.preview.fill.caching)
+      if api.nvim_win_is_valid(options.preview.winid) then
+        _dialog(buffer, options.preview.winid, "CACHING ITEM", options.preview.fill.caching)
+      end
       return
     end
 
@@ -44,20 +46,19 @@ local function _filetype_hook(filepath, buffer, options)
     if options.backend == "ueberzug" then
       options._ueberzug:send({
         path = cached_file,
-        x = window.col - 2,
-        y = window.line - 2,
+        x = window.col,
+        y = window.line,
         width = window.width,
         height = window.height,
       })
     elseif options.backend == "viu" then
-      _backend_proxy(buffer, { "viu", "-s", cached_file })
+      _termopen({ "viu", "-s", cached_file }, buffer, options.preview.winid)
     elseif options.backend == "chafa" then
-      _backend_proxy(buffer, { "chafa", cached_file })
+      _termopen({ "chafa", cached_file }, buffer, options.preview.winid)
     elseif options.backend == "jp2a" then
-      _backend_proxy(buffer, { "jp2a", "--colors", cached_file })
+      _termopen({ "jp2a", "--colors", cached_file }, buffer, options.preview.winid)
     elseif options.backend == "catimg" then
-      local width = api.nvim_win_get_width(options.preview.winid)
-      _backend_proxy(buffer, { "catimg", "-w", math.floor(width * 1.5), cached_file })
+      _termopen({ "catimg", cached_file }, buffer, options.preview.winid)
     end
     return
   end
@@ -68,6 +69,16 @@ local function _filetype_hook(filepath, buffer, options)
     if vim.tbl_contains({ "x-executable", "x-pie-executable", "x-sharedlib" }, mime[2]) then
       local stdout = _task({ "readelf", "--wide", "--demangle=auto", "--all", absolute })
       api.nvim_buf_set_lines(buffer, 0, -1, false, stdout)
+      return false
+    elseif extension == "torrent" then
+      local stdout = _task({ "transmission-show", "--unsorted", absolute })
+      api.nvim_buf_set_lines(buffer, 0, -1, false, stdout)
+      return false
+    elseif extension == "md" then
+      _termopen({ "glow", "--style=auto", absolute }, buffer, options.preview.winid)
+      return false
+    elseif mime[2] == "html" then
+      _termopen({ "lynx", "-dump", absolute }, buffer, options.preview.winid)
       return false
     elseif mime[1] == "text" or vim.tbl_contains({ "lua", "json" }, extension) then
       return true
@@ -92,10 +103,10 @@ local _MediaPreview = util.make_default_callable(function(options)
   options.preview.msg_bg_fillchar = options.preview.fill.mime
 
   return view.new_buffer_previewer({
-    define_preview = function(self, entry, _)
+    define_preview = function(self, entry, status)
       uv.fs_access(entry.value, "R", vim.schedule_wrap(function(_, permission)
         if permission then
-          options.preview.winid = self.state.winid
+          options.preview.winid = status.preview_win
           view.file_maker(entry.value, self.state.bufnr, options)
           return
         end

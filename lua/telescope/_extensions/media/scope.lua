@@ -177,40 +177,10 @@ function M.handlers.epub_handler(epub_path, cache_path, options)
   end)
   return NULL
 end
-
----@param zip_path string
----@param cache_path Path
----@param options tablelib
----@return unknown
-function M.handlers.zip_handler(zip_path, cache_path, options)
-  local in_cache, sha_path, cached_path = _encode_options(zip_path, cache_path, options)
-  if in_cache then return in_cache end
-  utils.zipinfo(zip_path, function(self, _)
-    local zip_items = self:result()
-    local supported_filetypes = M.supports()
-    for _, zip_item in ipairs(zip_items) do
-      local extension = vim.split(zip_item, ".", { plain = true })
-      extension = extension[#extension]
-      for _, supported_filetype in ipairs(supported_filetypes) do
-        if extension == supported_filetype then
-          local handler = M.supports[extension]
-          utils.unzip(cache_path.filename, zip_path, zip_item, function()
-            local zip_item_path = cache_path / zip_item
-            options.alias = zip_path
-            handler(zip_item_path, cache_path, options)
-          end)
-          return
-        end
-      end
-    end
-  end)
-  return NULL
-end
 -- }}}
 
 -- Adding handlers to supported filetypes. {{{
 M.supports["pdf"] = M.handlers.pdf_handler
-M.supports["zip"] = M.handlers.zip_handler
 
 M.supports["gif"] = M.handlers.gif_handler
 M.supports["eps"] = M.handlers.gif_handler
