@@ -196,19 +196,20 @@ Some of these are optional.
 - [x] Add support for WVC.
 - [x] Add support for RFC822.
 - [x] Add support for RTF.
-- [x] Add support for markdown.
+- [x] Add support for MARKDOWN.
 - [x] Add some canned functions for `config.on_confirm`.
 - [x] Improve caching.
 - [x] Use image magick instead of fontforge for previewing fonts.
 - [ ] Add text/binary file handlers.
-- [ ] Add cwd support.
+- [ ] Add `cwd` support.
 - [x] Add dialog boxes.
-- [x] Add rifle.lua.
-- [ ] Revise rifle.lua.
+- [x] Add `rifle.lua`.
+- [ ] Revise `rifle.lua`.
 - [ ] Recalibrate preview size when window is moved.
-- [ ] Check only once if all listed executables in rifle.lua exists.
+- [x] Check only once if all listed executables in `rifle.lua` exists.
 - [ ] Map executables to filetypes.
 - [ ] Refactor and revise.
+- [ ] Do not use `get_os_command_output`.
 
 </details>
 

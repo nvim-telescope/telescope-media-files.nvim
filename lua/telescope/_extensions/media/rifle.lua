@@ -73,6 +73,15 @@ for command, args in pairs(M.bullets) do
   M.bullets[command].has = N.executable(args[1]) == 1
 end
 
+function M.orders(extras, ...)
+  for _, binary in ipairs({ ... }) do
+    local bullet = M.bullets[binary]
+    if bullet.has then
+      return bullet + extras
+    end
+  end
+end
+
 M.bullets = setmetatable(M.bullets, {
   __call = function(self, _) return vim.tbl_keys(self) end,
 })

@@ -21,7 +21,133 @@ local _task = util.get_os_command_output
 local _dialog = view_util.set_preview_message
 -- }}}
 
-local function _timeout_hook(filepath, buffer, options) _dialog(buffer, options.preview.winid, "HELLO", "=") end
+local function redirector(buffer, extension, absolute, mime)
+  local _mime = vim.split(mime, "/", { plain = true })
+  if
+    rifle.bullets.readelf.has and vim.tbl_contains({ "x-executable", "x-pie-executable", "x-sharedlib" }, _mime[2])
+  then
+    local stdout = _task(rifle.bullets.readelf + absolute)
+    A.nvim_buf_set_lines(buffer, 0, -1, false, stdout)
+    return false
+  elseif extension == "torrent" then
+    local command = rifle.orders(absolute, "transmission_show", "aria2c")
+    if command then
+      local stdout = _task(command)
+      A.nvim_buf_set_lines(buffer, 0, -1, false, stdout)
+      return false
+    end
+  elseif vim.tbl_contains({ "odt", "sxw", "ods", "odp" }, extension) then
+    local command = rifle.orders(absolute, "odt2txt", "pandoc")
+    if command then
+      local stdout = _task(command)
+      A.nvim_buf_set_lines(buffer, 0, -1, false, stdout)
+      return false
+    end
+  elseif extension == "xlsx" then
+    local command
+    if rifle.bullets.xlsx2csv.has then
+      command = rifle.bullets.xlsx2csv + absolute
+      local stdout = _task(command)
+      A.nvim_buf_set_lines(buffer, 0, -1, false, stdout)
+      return false
+    end
+  elseif
+    string.match(mime, "wordprocessingml%.document$")
+    or string.match(mime, "/epub%+zip$")
+    or string.match(mime, "/x%-fictionbook%+xml$")
+  then
+    local command
+    if rifle.bullets.pandoc.has then
+      command = rifle.bullets.pandoc + absolute
+      local stdout = _task(command)
+      A.nvim_buf_set_option(buffer, "filetype", "markdown")
+      A.nvim_buf_set_lines(buffer, 0, -1, false, stdout)
+      return false
+    end
+  elseif string.match(mime, "text/rtf$") or string.match(mime, "msword$") then
+    local command
+    if rifle.bullets.catdoc.has then
+      command = rifle.bullets.catdoc + absolute
+      local stdout = _task(command)
+      A.nvim_buf_set_option(buffer, "filetype", "markdown")
+      A.nvim_buf_set_lines(buffer, 0, -1, false, stdout)
+      return false
+    end
+  elseif string.match(_mime[2], "ms%-excel$") then
+    local command
+    if rifle.bullets.xls2csv.has then
+      command = rifle.bullets.xls2csv + absolute
+      local stdout = _task(command)
+      A.nvim_buf_set_lines(buffer, 0, -1, false, stdout)
+      return false
+    end
+  elseif string.match(mime, "message/rfc822$") then
+    local command
+    if rifle.bullets.mu.has then
+      command = rifle.bullets.mu + absolute
+      local stdout = _task(command)
+      A.nvim_buf_set_lines(buffer, 0, -1, false, stdout)
+      return false
+    end
+  elseif string.match(mime, "^image/vnd%.djvu") then
+    local command = rifle.orders(absolute, "djvutxt", "exiftool")
+    if command then
+      rifle.termopen(buffer, command)
+      return false
+    end
+  elseif string.match(mime, "^image/") then
+    local command
+    if rifle.bullets.exiftool.has then
+      command = rifle.bullets.exiftool + absolute
+      local stdout = _task(command)
+      A.nvim_buf_set_lines(buffer, 0, -1, false, stdout)
+      return false
+    end
+  elseif extension == "md" then
+    local command
+    if rifle.bullets.glow.has then command = rifle.bullets.glow + absolute end
+    if command then
+      rifle.termopen(buffer, command)
+      return false
+    end
+    return true
+  elseif vim.tbl_contains({ "htm", "html", "xhtml", "xhtm" }, extension) then
+    local command = rifle.orders(absolute, "lynx", "w3m", "elinks", "pandoc")
+    if command then
+      local stdout = _task(command)
+      A.nvim_buf_set_lines(buffer, 0, -1, false, stdout)
+      A.nvim_buf_set_option(buffer, "filetype", "markdown")
+      return false
+    end
+    return true
+  elseif extension == "ipynb" then
+    if rifle.bullets.jupyter.has then
+      local command = rifle.bullets.jupyter + absolute
+      local stdout = _task(command)
+      A.nvim_buf_set_lines(buffer, 0, -1, false, stdout)
+      A.nvim_buf_set_option(buffer, "filetype", "markdown")
+      return false
+    end
+  elseif _mime[2] == "json" or extension == "json" then
+    local command = rifle.orders(absolute, "jq", "python")
+    if command then
+      local stdout = _task(command)
+      A.nvim_buf_set_lines(buffer, 0, -1, false, stdout)
+      A.nvim_buf_set_option(buffer, "filetype", "json")
+      return false
+    end
+    return true
+  elseif vim.tbl_contains({ "dff", "dsf", "wv", "wvc" }, extension) then
+    local command = rifle.orders(absolute, "mediainfo", "exiftool")
+    if command then
+      local stdout = _task(command)
+      A.nvim_buf_set_lines(buffer, 0, -1, false, stdout)
+      return false
+    end
+  elseif _mime[1] == "text" or vim.tbl_contains({ "lua" }, extension) then
+    return true
+  end
+end
 
 local function _filetype_hook(filepath, buffer, options)
   local winid = options.preview.winid
@@ -70,174 +196,8 @@ local function _filetype_hook(filepath, buffer, options)
 
   local mime = _task(rifle.bullets.file + { "--brief", "--mime-type", absolute })[1]
   if mime then
-    local _mime = vim.split(mime, "/", { plain = true })
-    if
-      rifle.bullets.readelf.has
-      and vim.tbl_contains({ "x-executable", "x-pie-executable", "x-sharedlib" }, _mime[2])
-    then
-      local stdout = _task(rifle.bullets.readelf + absolute)
-      A.nvim_buf_set_lines(buffer, 0, -1, false, stdout)
-      return false
-    elseif extension == "torrent" then
-      local command
-      if rifle.bullets.transmission_show.has then
-        command = rifle.bullets.transmission_show + absolute
-      elseif rifle.bullets.aria2c.has then
-        command = rifle.bullets.aria2c + absolute
-      end
-
-      if command then
-        local stdout = _task(command)
-        A.nvim_buf_set_lines(buffer, 0, -1, false, stdout)
-        return false
-      end
-    elseif vim.tbl_contains({ "odt", "sxw", "ods", "odp" }, extension) then
-      local command
-      if rifle.bullets.odt2txt.has then
-        command = rifle.bullets.odt2txt + absolute
-      elseif rifle.bullets.pandoc.has then
-        command = rifle.bullets.pandoc + absolute
-        A.nvim_buf_set_option(buffer, "filetype", "markdown")
-      end
-
-      if command then
-        local stdout = _task(command)
-        A.nvim_buf_set_lines(buffer, 0, -1, false, stdout)
-        return false
-      end
-    elseif extension == "xlsx" then
-      local command
-      if rifle.bullets.xlsx2csv.has then
-        command = rifle.bullets.xlsx2csv + absolute
-        local stdout = _task(command)
-        A.nvim_buf_set_lines(buffer, 0, -1, false, stdout)
-        return false
-      end
-    elseif
-      string.match(mime, "wordprocessingml%.document$")
-      or string.match(mime, "/epub%+zip$")
-      or string.match(mime, "/x%-fictionbook%+xml$")
-    then
-      local command
-      if rifle.bullets.pandoc.has then
-        command = rifle.bullets.pandoc + absolute
-        local stdout = _task(command)
-        A.nvim_buf_set_option(buffer, "filetype", "markdown")
-        A.nvim_buf_set_lines(buffer, 0, -1, false, stdout)
-        return false
-      end
-    elseif string.match(mime, "text/rtf$") or string.match(mime, "msword$") then
-      local command
-      if rifle.bullets.catdoc.has then
-        command = rifle.bullets.catdoc + absolute
-        local stdout = _task(command)
-        A.nvim_buf_set_option(buffer, "filetype", "markdown")
-        A.nvim_buf_set_lines(buffer, 0, -1, false, stdout)
-        return false
-      end
-    elseif string.match(_mime[2], "ms%-excel$") then
-      local command
-      if rifle.bullets.xls2csv.has then
-        command = rifle.bullets.xls2csv + absolute
-        local stdout = _task(command)
-        A.nvim_buf_set_lines(buffer, 0, -1, false, stdout)
-        return false
-      end
-    elseif string.match(mime, "message/rfc822$") then
-      local command
-      if rifle.bullets.mu.has then
-        command = rifle.bullets.mu + absolute
-        local stdout = _task(command)
-        A.nvim_buf_set_lines(buffer, 0, -1, false, stdout)
-        return false
-      end
-    elseif string.match(mime, "^image/vnd%.djvu") then
-      local command
-      if rifle.bullets.djvutxt.has then
-        command = rifle.bullets.djvutxt + absolute
-      elseif rifle.bullets.exiftool.has then
-        command = rifle.bullets.exiftool + absolute
-      end
-
-      if command then
-        rifle.termopen(buffer, command)
-        return false
-      end
-    elseif string.match(mime, "^image/") then
-      local command
-      if rifle.bullets.exiftool.has then
-        command = rifle.bullets.exiftool + absolute
-        local stdout = _task(command)
-        A.nvim_buf_set_lines(buffer, 0, -1, false, stdout)
-        return false
-      end
-    elseif extension == "md" then
-      local command
-      if rifle.bullets.glow.has then command = rifle.bullets.glow + absolute end
-
-      if command then
-        rifle.termopen(buffer, command)
-        return false
-      end
-      return true
-    elseif vim.tbl_contains({ "htm", "html", "xhtml", "xhtm" }, extension) then
-      local command
-      if rifle.bullets.lynx.has then
-        command = rifle.bullets.lynx + absolute
-      elseif rifle.bullets.w3m.has then
-        command = rifle.bullets.w3m + absolute
-      elseif rifle.bullets.elinks.has then
-        command = rifle.bullets.elinks + absolute
-      elseif rifle.bullets.pandoc.has then
-        command = rifle.bullets.pandoc + absolute
-      end
-
-      if command then
-        rifle.termopen(buffer, command)
-        A.nvim_buf_set_option(buffer, "filetype", "markdown")
-        return false
-      end
-      return true
-    elseif _mime[2] == "json" or extension == "json" then
-      local command
-      if rifle.bullets.jq.has then
-        command = rifle.bullets.jq + absolute
-      elseif rifle.bullets.python.has then
-        command = rifle.bullets.python + absolute
-      end
-
-      if command then
-        local stdout = _task(command)
-        A.nvim_buf_set_lines(buffer, 0, -1, false, stdout)
-        A.nvim_buf_set_option(buffer, "filetype", "json")
-        return false
-      end
-      return true
-    elseif extension == "ipynb" then
-      local command
-      if rifle.bullets.jupyter.has then
-        command = rifle.bullets.jupyter + absolute
-        local stdout = _task(command)
-        A.nvim_buf_set_lines(buffer, 0, -1, false, stdout)
-        A.nvim_buf_set_option(buffer, "filetype", "markdown")
-        return false
-      end
-    elseif vim.tbl_contains({ "dff", "dsf", "wv", "wvc" }, extension) then
-      local command
-      if rifle.bullets.mediainfo.has then
-        command = rifle.bullets.mediainfo + absolute
-      elseif rifle.bullets.exiftool.has then
-        command = rifle.bullets.exiftool + absolute
-      end
-
-      if command then
-        local stdout = _task(command)
-        A.nvim_buf_set_lines(buffer, 0, -1, false, stdout)
-        return false
-      end
-    elseif _mime[1] == "text" or vim.tbl_contains({ "lua" }, extension) then
-      return true
-    end
+    local result = redirector(buffer, extension, absolute, mime)
+    if result == true or result == false then return result end
   end
 
   if rifle.bullets.file.has then
@@ -262,7 +222,6 @@ local _MediaPreview = util.make_default_callable(function(options)
   end
 
   options.preview.filetype_hook = _filetype_hook
-  options.preview.timeout_hook = _timeout_hook
   options.preview.msg_bg_fillchar = options.preview.fill.mime
 
   return view.new_buffer_previewer({
@@ -272,6 +231,7 @@ local _MediaPreview = util.make_default_callable(function(options)
         "R",
         vim.schedule_wrap(function(_, permission)
           if permission then
+            -- TODO: Is there any other way of doing this?
             options.preview.winid = status.preview_win
             view.file_maker(entry.value, self.state.bufnr, options)
             return
