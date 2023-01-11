@@ -58,6 +58,7 @@ local _TelescopeMediaConfig = {
       permission = "╱",
       caching = "⎪",
       binary = "X",
+      file = "~",
     },
   },
 }

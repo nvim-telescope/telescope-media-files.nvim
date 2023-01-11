@@ -2,7 +2,7 @@
 
 # telescope-media.nvim
 
-https://user-images.githubusercontent.com/80379926/211297245-a6463782-93bd-435a-8e11-3283872f0337.mp4
+<https://user-images.githubusercontent.com/80379926/211297245-a6463782-93bd-435a-8e11-3283872f0337.mp4>
 
 Preview IMAGES, PDF, EPUB, VIDEO, and FONTS from Neovim using Telescope.
 Keep in mind that this is a rewrite so some filetypes are not yet supported.
@@ -58,6 +58,11 @@ Following are the filetypes that this picker supports.
 - AI
 - EPS
 - PDF
+- MARKDOWN
+- TORRENT
+- RFC822
+- ODT
+- DOCX
 
 </details>
 
@@ -93,7 +98,7 @@ However, you could also pass a table into the extension call.
 require("telescope").setup({
   extensions = {
     media = {
-      backend = "viu", -- "ueberzug"|"viu"|"chafa"|"jp2a"|catimg
+      backend = "viu", -- "ueberzug"|"viu"|"chafa"|"jp2a"|"catimg"
       on_confirm = canned.single.copy_path,
       on_confirm_muliple = canned.multiple.bulk_copy,
       cache_path = "/tmp/tele.media.cache",
@@ -127,11 +132,30 @@ EOF
 Some of these are optional.
 
 - [ueberzug](https://github.com/seebye/ueberzug) is required for viewing images.
+- [catimg](https://github.com/posva/catimg) is required for viewing images.
+- [jp2a](https://github.com/cslarsen/jp2a) is required for viewing images
+- [chafa](https://github.com/hpjansson/chafa/) is required for viewing images
+- [viu](https://github.com/atanunq/viu) is required for viewing images
 - [ripgrep](https://github.com/BurntSushi/ripgrep) is optional but we use it by default.
 - [fontforge](https://fontforge.org/en-US/) is for viewing fonts.
 - [poppler-utils](https://poppler.freedesktop.org/) is for viewing PDFs.
 - [epub-thumbnailer](https://github.com/marianosimone/epub-thumbnailer) is for viewing EPUB.
 - [calibre](https://calibre-ebook.com) is for viewing EPUB, FF2 and MOBI.
+- [transmission-cli](http://www.transmissionbt.com) for TORRENTs.
+- [aria2c](https://aria2.github.io/) for TORRENTs.
+- [odt2txt](https://github.com/dstosberg/odt2txt/) for ODT, SXW, ODS and ODP.
+- [xlsx2csv](https://github.com/dilshod/xlsx2csv) for XLSX.
+- [w3m](https://github.com/acg/w3m) for HTM, HTML and XHTML.
+- [elinks](https://wiki.archlinux.org/title/ELinks) for HTM, HTML and XHTML.
+- [lynx](https://lynx.browser.org) for HTM, HTML and XHTML.
+- [pandoc](https://pandoc.org/index.html) for MARKDOWN, HTM, HTML, XHTML, ODT, SXW, ODS and ODP.
+- [mediainfo](https://mediaarea.net/en/MediaInfo) for audio files.
+- [exiftool](https://exiftool.org/) for video files.
+- [glow](https://github.com/charmbracelet/glow) for MARKDOWN.
+- [jupyter](https://jupyter.org/) for IPYNB.
+- [jq](https://stedolan.github.io/jq/) for JSON.
+- [catdoc](https://www.wagner.pp.ru/~vitus/software/catdoc/) for MS-WORD and RTF.
+- [python](https://www.python.org/) for JSON.
 
 ## TODOS
 
@@ -156,14 +180,34 @@ Some of these are optional.
 - [x] Add support for fonts.
 - [x] Add support for video thumbnails.
 - [x] Add support for audio covers.
-- [x] Add support for pdfs.
+- [x] Add support for PDF.
+- [x] Add support for MSWORD types.
+- [x] Add support for XLSX.
+- [x] Add support for XLS.
+- [x] Add support for DJVU.
+- [x] Add support for TORRENT.
+- [x] Add support for ODS.
+- [x] Add support for ODP.
+- [x] Add support for SXW.
+- [x] Add support for ODT.
+- [x] Add support for DFF.
+- [x] Add support for DSF.
+- [x] Add support for WV.
+- [x] Add support for WVC.
+- [x] Add support for RFC822.
+- [x] Add support for RTF.
+- [x] Add support for markdown.
 - [x] Add some canned functions for `config.on_confirm`.
 - [x] Improve caching.
 - [x] Use image magick instead of fontforge for previewing fonts.
 - [ ] Add text/binary file handlers.
 - [ ] Add cwd support.
-- [ ] Add dialog boxes.
+- [x] Add dialog boxes.
+- [x] Add rifle.lua.
+- [ ] Revise rifle.lua.
 - [ ] Recalibrate preview size when window is moved.
+- [ ] Check only once if all listed executables in rifle.lua exists.
+- [ ] Map executables to filetypes.
 - [ ] Refactor and revise.
 
 </details>
@@ -175,3 +219,4 @@ Some of these are optional.
 - [buffer_previewer](https://github.com/nvim-telescope/telescope.nvim/blob/master/lua/telescope/previewers/buffer_previewer.lua)
 - [ueberzug](https://github.com/seebye/ueberzug)
 - [lua-sha](https://gist.github.com/PedroAlvesV/ea80f6724df49ace29eed03e7f75b589)
+- [ranger](https://github.com/ranger/ranger/)
