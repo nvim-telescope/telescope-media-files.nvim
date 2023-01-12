@@ -3,14 +3,8 @@ local M = {}
 local A = vim.api
 local N = vim.fn
 
-function M.termopen(buffer, command)
-  A.nvim_buf_call(buffer, function()
-    if A.nvim_buf_is_valid(buffer) and A.nvim_buf_get_option(buffer, "modifiable") then N.termopen(command) end
-  end)
-end
-
 M.bullets = {
-  ["viu"] = { "viu", "-s" },
+  ["viu"] = { "viu" },
   ["chafa"] = { "chafa" },
   ["w3m"] = { "w3m", "-no-mouse", "-dump" },
   ["jp2a"] = { "jp2a", "--colors" },
@@ -19,7 +13,7 @@ M.bullets = {
   ["glow"] = { "glow", "--style=auto" },
   ["readelf"] = { "readelf", "--wide", "--demangle=auto", "--all" },
   ["file"] = { "file", "--no-pad", "--dereference" },
-  ["transmission_show"] = { "transmission-show", "--unsorted" },
+  ["transmission-show"] = { "transmission-show", "--unsorted" },
   ["aria2c"] = { "aria2c", "--show-file" },
   ["elinks"] = { "elinks", "-dump" },
   ["pandoc"] = { "pandoc", "--standalone", "--to=markdown" },
@@ -34,6 +28,10 @@ M.bullets = {
   ["mu"] = { "mu", "view" },
   ["xls2csv"] = { "xls2csv" },
   ["djvutxt"] = { "djvutxt" },
+  ["bsdtar"] = { "bsdtar", "--list", "--file" },
+  ["atool"] = { "atool", "--list" },
+  ["unrar"] = { "unrar", "lt", "-p-" },
+  ["7z"] = { "7z", "l", "-p" },
 }
 
 local function _call(self, ...)
@@ -74,19 +72,22 @@ for command, args in pairs(M.bullets) do
 end
 
 function M.orders(extras, ...)
-  for _, binary in ipairs({ ... }) do
+  local binaries = { ... }
+  for _, binary in ipairs(binaries) do
     local bullet = M.bullets[binary]
-    if bullet.has then
-      return bullet + extras
-    end
+    if bullet.has then return bullet + extras end
   end
+end
+
+function M.has(binary)
+  binary = M.bullets[binary]
+  if binary then return binary.has end
+  return false
 end
 
 M.bullets = setmetatable(M.bullets, {
   __call = function(self, _) return vim.tbl_keys(self) end,
 })
-
-M.supports = {}
 
 return M
 

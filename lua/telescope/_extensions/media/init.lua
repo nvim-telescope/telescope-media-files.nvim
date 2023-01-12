@@ -45,7 +45,8 @@ local fn = vim.fn
 -- The default configuration. {{{
 ---This is the default configuration.
 local _TelescopeMediaConfig = {
-  backend = "ueberzug",
+  backend = "none",
+  move = true,
   on_confirm = canned.single.copy_path,
   on_confirm_muliple = canned.multiple.bulk_copy,
   cache_path = "/tmp/tele.media.cache",
@@ -56,7 +57,6 @@ local _TelescopeMediaConfig = {
     fill = {
       mime = "",
       permission = "╱",
-      caching = "⎪",
       binary = "X",
       file = "~",
     },

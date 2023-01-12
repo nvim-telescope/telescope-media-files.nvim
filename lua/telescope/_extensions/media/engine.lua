@@ -1,4 +1,4 @@
----@tag media.utils
+---@tag media.engine
 
 ---@config { ["name"] = "UTILS", ["field_heading"] = "Options", ["module"] = "telescope._extensions.media.utils" }
 

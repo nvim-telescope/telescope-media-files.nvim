@@ -12,7 +12,7 @@ local M = {}
 
 local Path = require("plenary.path")
 local sha = require("telescope._extensions.media.sha")
-local utils = require("telescope._extensions.media.utils")
+local engine = require("telescope._extensions.media.engine")
 local scandir = require("plenary.scandir")
 
 local fn = vim.fn
@@ -83,7 +83,7 @@ end
 function M.handlers.image_handler(image_path, cache_path, options)
   local in_cache, sha_path, cached_path = _encode_options(image_path, cache_path, options)
   if in_cache then return in_cache end
-  utils.magick(image_path, cached_path, options, function() M.caches[sha_path] = true end)
+  engine.magick(image_path, cached_path, options, function() M.caches[sha_path] = true end)
   return image_path
 end
 
@@ -94,7 +94,7 @@ end
 function M.handlers.font_handler(font_path, cache_path, options)
   local in_cache, sha_path, cached_path = _encode_options(font_path, cache_path, options)
   if in_cache then return in_cache end
-  utils.fontmagick(font_path, cached_path, options, function(self, _)
+  engine.fontmagick(font_path, cached_path, options, function(self, _)
     if self.code == 0 then M.caches[sha_path] = true end
   end)
   return NULL
@@ -107,11 +107,11 @@ end
 function M.handlers.video_handler(video_path, cache_path, options)
   local in_cache, sha_path, cached_path = _encode_options(video_path, cache_path, options)
   if in_cache then return in_cache end
-  utils.ffmpeg(video_path, cached_path, options, function(_, code, _)
+  engine.ffmpeg(video_path, cached_path, options, function(_, code, _)
     if code == 0 then
       M.caches[sha_path] = true
     else
-      utils.ffmpegthumbnailer(video_path, cached_path, options, function(_, _code, _)
+      engine.ffmpegthumbnailer(video_path, cached_path, options, function(_, _code, _)
         if _code == 0 then M.caches[sha_path] = true end
       end)
     end
@@ -127,7 +127,7 @@ function M.handlers.gif_handler(gif_path, cache_path, options)
   local in_cache, sha_path, cached_path = _encode_options(gif_path, cache_path, options)
   if in_cache then return in_cache end
   options.index = "[0]"
-  utils.magick(gif_path, cached_path, options, function(_, code, _)
+  engine.magick(gif_path, cached_path, options, function(_, code, _)
     if code == 0 then M.caches[sha_path] = true end
   end)
   return NULL
@@ -140,7 +140,7 @@ end
 function M.handlers.audio_handler(audio_path, cache_path, options)
   local in_cache, sha_path, cached_path = _encode_options(audio_path, cache_path, options)
   if in_cache then return in_cache end
-  utils.ffmpeg(audio_path, cached_path, options, function(_, code, _)
+  engine.ffmpeg(audio_path, cached_path, options, function(_, code, _)
     if code == 0 then M.caches[sha_path] = true end
   end)
   return NULL
@@ -153,7 +153,7 @@ end
 function M.handlers.pdf_handler(pdf_path, cache_path, options)
   local in_cache, sha_path, cached_path = _encode_options(pdf_path, cache_path, options)
   if in_cache then return in_cache end
-  utils.pdftoppm(pdf_path, cached_path, options, function(_, code, _)
+  engine.pdftoppm(pdf_path, cached_path, options, function(_, code, _)
     if code == 0 then M.caches[sha_path] = true end
   end)
   return NULL
@@ -166,11 +166,11 @@ end
 function M.handlers.epub_handler(epub_path, cache_path, options)
   local in_cache, sha_path, cached_path = _encode_options(epub_path, cache_path, options)
   if in_cache then return in_cache end
-  utils.epubthumbnailer(epub_path, cached_path, options, function(_, code, _)
+  engine.epubthumbnailer(epub_path, cached_path, options, function(_, code, _)
     if code == 0 then
       M.caches[sha_path] = true
     else
-      utils.ebookmeta(epub_path, cached_path, options, function(_, child_code, _)
+      engine.ebookmeta(epub_path, cached_path, options, function(_, child_code, _)
         if child_code == 0 then M.caches[sha_path] = true end
       end)
     end
@@ -190,7 +190,6 @@ M.supports["mobi"] = M.handlers.epub_handler
 M.supports["fb2"] = M.handlers.epub_handler
 
 M.supports["png"] = M.handlers.image_handler
-M.supports["jpg"] = M.handlers.image_handler
 M.supports["jpeg"] = M.handlers.image_handler
 M.supports["svg"] = M.handlers.image_handler
 M.supports["webp"] = M.handlers.image_handler

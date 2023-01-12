@@ -98,7 +98,8 @@ However, you could also pass a table into the extension call.
 require("telescope").setup({
   extensions = {
     media = {
-      backend = "viu", -- "ueberzug"|"viu"|"chafa"|"jp2a"|"catimg"
+      backend = "viu", -- "none"|"ueberzug"|"viu"|"chafa"|"jp2a"|"catimg"
+      move = true, -- experimental GIF preview
       on_confirm = canned.single.copy_path,
       on_confirm_muliple = canned.multiple.bulk_copy,
       cache_path = "/tmp/tele.media.cache",
@@ -200,16 +201,22 @@ Some of these are optional.
 - [x] Add some canned functions for `config.on_confirm`.
 - [x] Improve caching.
 - [x] Use image magick instead of fontforge for previewing fonts.
-- [ ] Add text/binary file handlers.
+- [x] Add text/binary file handlers.
 - [ ] Add `cwd` support.
+- [ ] Add `img2txt` backend.
+- [ ] Add `gif2txt` backend.
 - [x] Add dialog boxes.
 - [x] Add `rifle.lua`.
-- [ ] Revise `rifle.lua`.
+- [x] Revise `rifle.lua`.
 - [ ] Recalibrate preview size when window is moved.
 - [x] Check only once if all listed executables in `rifle.lua` exists.
 - [ ] Map executables to filetypes.
 - [ ] Refactor and revise.
-- [ ] Do not use `get_os_command_output`.
+- [ ] Pass options for custom timeout limit for `_run()` function.
+- [ ] Document `preview.lua` and `rifle.lua`.
+- [ ] Revise all documentations.
+- [ ] Add `checkheath` module.
+- [x] Do not use `get_os_command_output` for possible long jobs.
 
 </details>
 
