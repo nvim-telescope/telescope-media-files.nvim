@@ -22,107 +22,112 @@ local U = vim.loop
 local N = vim.fn
 local A = vim.api
 local B = rifle.bullets
-local _dial = putil.set_preview_message
 -- }}}
 
-local function _run(cmd, buffer, ex)
-  ---@type Job
+-- Helpers {{{
+local function _dial(buffer, winid, message, fill) pcall(putil.set_preview_message, buffer, winid, message, fill) end
+
+-- stylua: ignore start
+local function _run(cmd, buffer, options, ex)
   local task = Job:new(cmd)
-  task:after_success(vim.schedule_wrap(function(self, _)
-    local ok, _ = pcall(A.nvim_buf_set_lines, buffer, 0, -1, false, self:result())
-    if ok then A.nvim_buf_set_option(buffer, "filetype", F.if_nil(ex, "text")) end
-  end))
-  pcall(Job.sync, task, 100, 10)
+  local ok, result, code = pcall(Job.sync, task, options.preview.timeout, options.preview.wait, options.preview.redraw)
+  if ok then
+    if code == 0 then
+      pcall(A.nvim_buf_set_lines, buffer, 0, -1, false, result)
+      A.nvim_buf_set_option(buffer, "filetype", F.if_nil(ex, "text"))
+    else _dial(buffer, options.preview.winid, "PREVIEWER ERROR", options.preview.fill.error) end
+  else _dial(buffer, options.preview.winid, "PREVIEWER TIMED OUT", options.preview.fill.timeout) end
   return false
 end
 
--- stylua: ignore start
-local function redirector(bufnr, winid, ex, abspath)
-  local mime = util.get_os_command_output(B.file + { "--brief", "--mime-type", abspath })[1]
+local function redirect(buffer, ex, absolute, options)
+  local mime = util.get_os_command_output(B.file + { "--brief", "--mime-type", absolute })[1]
   local _mime = vim.split(mime, "/", { plain = true })
+  timeout = F.if_nil(timeout, 50)
 
   if rifle.has("readelf") and vim.tbl_contains({ "x-executable", "x-pie-executable", "x-sharedlib" }, _mime[2]) then
-    return _run(B.readelf + abspath, bufnr)
+    return _run(B.readelf + absolute, buffer, options)
   elseif vim.tbl_contains({ "a", "ace", "alz", "arc", "arj", "bz", "bz2", "cab", "cpio", "deb", "gz", "jar", "lha", "lz", "lzh", "lzma", "lzo", "rpm", "rz", "t7z", "tar", "tbz", "tbz2", "tgz", "tlz", "txz", "tZ", "tzo", "war", "xpi", "xz", "Z", "zip" }, ex) then
-    local cmd = rifle.orders(abspath, "bsdtar", "atool")
-    if cmd then _run(cmd, bufnr) end
+    local cmd = rifle.orders(absolute, "bsdtar", "atool")
+    if cmd then _run(cmd, buffer, options) end
   elseif ex == "rar" and rifle.has("unrar") then
-    return _run(B.unrar + abspath, bufnr)
+    return _run(B.unrar + absolute, buffer, options)
   elseif ex == "7z" and rifle.has("7z") then
-    return _run(B["7z"] + abspath, bufnr)
+    return _run(B["7z"] + absolute, buffer, options)
   elseif ex == "pdf" and rifle.has("exiftool") then
-    return _run(B.exiftool + abspath, bufnr)
+    return _run(B.exiftool + absolute, buffer, options)
   elseif ex == "torrent" then
-    local cmd = rifle.orders(abspath, "transmission-show", "aria2c")
-    if cmd then return _run(cmd, bufnr) end
+    local cmd = rifle.orders(absolute, "transmission-show", "aria2c")
+    if cmd then return _run(cmd, buffer, options) end
   elseif vim.tbl_contains({ "odt", "sxw", "ods", "odp" }, ex) then
-    local cmd = rifle.orders(abspath, "odt2txt", "pandoc")
-    if cmd then return _run(cmd, bufnr) end
+    local cmd = rifle.orders(absolute, "odt2txt", "pandoc")
+    if cmd then return _run(cmd, buffer, options) end
   elseif ex == "xlsx" and rifle.has("xlsx2csv") then
-    return _run(B.xlsx2csv + abspath, bufnr)
+    return _run(B.xlsx2csv + absolute, buffer, options)
   elseif mutil.any(mime, "wordprocessingml%.document$", "/epub%+zip$", "/x%-fictionbook%+xml$") and rifle.has("pandoc") then
-    return _run(B.pandoc + abspath, bufnr, "markdown")
+    return _run(B.pandoc + absolute, buffer, options, "markdown")
   elseif mutil.any(mime, "text/rtf$", "msword$") and rifle.has("catdoc") then
-    return _run(B.catdoc + abspath, bufnr)
+    return _run(B.catdoc + absolute, buffer, options)
   elseif mutil.any(_mime[2], "ms%-excel$") and rifle.has("xls2csv") then
-    return _run(B.xls2csv + abspath, bufnr)
+    return _run(B.xls2csv + absolute, buffer, options)
   elseif mutil.any(mime, "message/rfc822$") and rifle.has("mu") then
-    return _run(B.mu + abspath, bufnr)
+    return _run(B.mu + absolute, buffer, options)
   elseif mutil.any(mime, "^image/vnd%.djvu") then
-    local cmd = rifle.orders(abspath, "djvutxt", "exiftool")
-    if cmd then return mutil.termopen(bufnr, cmd) end
+    local cmd = rifle.orders(absolute, "djvutxt", "exiftool")
+    if cmd then return mutil.termopen(buffer, cmd) end
   elseif mutil.any(mime, "^image/") and rifle.has("exiftool") then
-    return _run(B.exiftool + abspath, bufnr)
+    return _run(B.exiftool + absolute, buffer, options)
   elseif mutil.any(mime, "^audio/", "^video/") then
-    local cmd = rifle.orders(abspath, "mediainfo", "exiftool")
-    if cmd then return mutil.termopen(bufnr, cmd) end
+    local cmd = rifle.orders(absolute, "mediainfo", "exiftool")
+    if cmd then return mutil.termopen(buffer, cmd) end
   elseif ex == "md" then
-    if rifle.has("glow") then return mutil.termopen(bufnr, B.glow + abspath) end
+    if rifle.has("glow") then return mutil.termopen(buffer, B.glow + absolute) end
     return true
   elseif vim.tbl_contains({ "htm", "html", "xhtml", "xhtm" }, ex) then
-    local cmd = rifle.orders(abspath, "lynx", "w3m", "elinks", "pandoc")
-    if cmd then return _run(cmd, bufnr, "markdown") end
+    local cmd = rifle.orders(absolute, "lynx", "w3m", "elinks", "pandoc")
+    if cmd then return _run(cmd, buffer, options, "markdown") end
     return true
   elseif ex == "ipynb" and rifle.has("jupyter") then
-    return _run(B.jupyter + abspath, bufnr, "markdown")
+    return _run(B.jupyter + absolute, buffer, options, "markdown")
   elseif _mime[2] == "json" or ex == "json" then
-    local cmd = rifle.orders(abspath, "jq", "python")
-    if cmd then return _run(cmd, bufnr, "json") end
+    local cmd = rifle.orders(absolute, "jq", "python")
+    if cmd then return _run(cmd, buffer, options, "json") end
     return true
   elseif vim.tbl_contains({ "dff", "dsf", "wv", "wvc" }, ex) then
-    local cmd = rifle.orders(abspath, "mediainfo", "exiftool")
-    if cmd then return _run(cmd, bufnr) end
+    local cmd = rifle.orders(absolute, "mediainfo", "exiftool")
+    if cmd then return _run(cmd, buffer, options) end
   elseif _mime[1] == "text" or vim.tbl_contains({ "lua" }, ex) then
     return true
   end
 
   if rifle.has("file") then
-    local results = util.get_os_command_output(B.file + abspath)[1]
-    _dial(bufnr, winid, vim.split(results, ": ", { plain = true })[2], fill_binary)
+    local results = util.get_os_command_output(B.file + absolute)[1]
+    _dial(buffer, winid, vim.split(results, ": ", { plain = true })[2], fill_binary)
     return false
   end
-
-  _dial(bufnr, winid, "CANNOT PREVIEW FILE", fill_file)
+  _dial(buffer, winid, "CANNOT PREVIEW FILE", fill_file)
   return false
 end
 -- stylua: ignore end
+-- }}}
 
-local function _filetype_hook(filepath, bufnr, options)
+-- Hook {{{
+local function _filetype_hook(filepath, buffer, options)
   local winid = options.preview.winid
   local ex = N.fnamemodify(filepath, ":e"):lower()
-  local abspath = N.fnamemodify(filepath, ":p")
+  local abs = N.fnamemodify(filepath, ":p")
   local handler = scope.supports[ex]
 
   local fill_binary = options.preview.fill.binary
   local fill_file = options.preview.fill.file
 
-  if not winid and not bufnr and not A.nvim_buf_is_valid(bufnr) and not A.nvim_win_is_valid(winid) then return end
+  if not winid and not buffer and not A.nvim_buf_is_valid(buffer) and not A.nvim_win_is_valid(winid) then return end
   if handler then
-    -- stylua: ignore start
     local _cache
-    if ex == "gif" and options.move then _cache = abspath
-    else _cache = handler(abspath, options.cache_path, options) end
-    if _cache == NULL then return redirector(bufnr, winid, ex, abspath) end
+    -- stylua: ignore start
+    if ex == "gif" and options.move then _cache = abs
+    else _cache = handler(abs, options.cache_path, options) end
+    if _cache == NULL then return redirect(buffer, ex, abs, options) end
     -- stylua: ignore end
 
     local win = options.get_preview_window()
@@ -130,24 +135,26 @@ local function _filetype_hook(filepath, bufnr, options)
       options._ueberzug:send({ path = _cache, x = win.col, y = win.line, width = win.width, height = win.height })
     elseif options.backend == "viu" then
       if not rifle.has("viu") then error("viu isn't in PATH.", ERROR) end
-      mutil.termopen(bufnr, B.viu + _cache)
+      mutil.termopen(buffer, B.viu + _cache)
     elseif options.backend == "chafa" then
       if not rifle.has("chafa") then error("chafa isn't in PATH.", ERROR) end
-      mutil.termopen(bufnr, B.chafa + _cache)
+      mutil.termopen(buffer, B.chafa + _cache)
     elseif options.backend == "jp2a" then
       if not rifle.has("jp2a") then error("jp2a isn't in PATH.", ERROR) end
-      mutil.termopen(bufnr, B.jp2a + _cache)
+      mutil.termopen(buffer, B.jp2a + _cache)
     elseif options.backend == "catimg" then
       if not rifle.has("catimg") then error("catimg isn't in PATH.", ERROR) end
-      mutil.termopen(bufnr, B.catimg + _cache)
+      mutil.termopen(buffer, B.catimg + _cache)
     else
-      return redirector(bufnr, winid, ex, abspath)
+      return redirect(buffer, ex, abs, options)
     end
     return false
   end
-  return redirector(bufnr, winid, ex, abspath)
+  return redirect(buffer, ex, abs, options)
 end
+-- }}}
 
+-- Previewer {{{
 local _MediaPreview = util.make_default_callable(function(options)
   options.cache_path = Path:new(options.cache_path)
   scope.load_caches(options.cache_path)
@@ -163,12 +170,13 @@ local _MediaPreview = util.make_default_callable(function(options)
 
   return bview.new_buffer_previewer({
     define_preview = function(self, entry, status)
+      entry_full = (string.format("%s/%s", entry.cwd, entry.value):gsub("//", "/"))
       -- stylua: ignore start
-      U.fs_access(entry.value, "R", vim.schedule_wrap(function(_, permission)
+      U.fs_access(entry_full, "R", vim.schedule_wrap(function(_, permission)
         if permission then
           -- TODO: Is there any other way of doing this?
           options.preview.winid = status.preview_win
-          bview.file_maker(entry.value, self.state.bufnr, options)
+          bview.file_maker(entry_full, self.state.bufnr, options)
           return
         end
         _dial(self.state.bufnr, self.state.winid, "COULD NOT ACCESS FILE", fill_perm)
@@ -190,5 +198,6 @@ local _MediaPreview = util.make_default_callable(function(options)
 end, options)
 
 return _MediaPreview
+-- }}}
 
 -- vim:filetype=lua:fileencoding=utf-8

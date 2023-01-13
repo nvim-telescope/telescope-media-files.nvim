@@ -53,12 +53,18 @@ local _TelescopeMediaConfig = {
   preview_title = "",
   results_title = "",
   prompt_title = "Media",
+  cwd = vim.loop.cwd(),
   preview = {
+    timeout = 200,
+    redraw = false,
+    wait = 10,
     fill = {
       mime = "",
       permission = "╱",
       binary = "X",
       file = "~",
+      error = ":",
+      timeout = "+",
     },
   },
 }

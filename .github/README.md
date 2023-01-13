@@ -202,7 +202,7 @@ Some of these are optional.
 - [x] Improve caching.
 - [x] Use image magick instead of fontforge for previewing fonts.
 - [x] Add text/binary file handlers.
-- [ ] Add `cwd` support.
+- [x] Add `cwd` support.
 - [ ] Add `img2txt` backend.
 - [ ] Add `gif2txt` backend.
 - [x] Add dialog boxes.
