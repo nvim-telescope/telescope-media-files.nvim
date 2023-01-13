@@ -1,6 +1,6 @@
 ---@tag media.engine
 
----@config { ["name"] = "UTILS", ["field_heading"] = "Options", ["module"] = "telescope._extensions.media.utils" }
+---@config { ["name"] = "ENGINE", ["field_heading"] = "Options", ["module"] = "telescope._extensions.media.engine" }
 
 ---@brief [[
 --- Utilities for extracting and converting media files to JPGs.

@@ -111,7 +111,7 @@ end
 ---@private
 local function _media(options)
   options = F.if_nil(options, {})
-  options.attach_mappings = F.if_nil(function(buffer, map)
+  options.attach_mappings = F.if_nil(options.attach_mappings, function(buffer, map)
     actions.select_default:replace(function(prompt_buffer)
       local current_picker = action_state.get_current_picker(prompt_buffer)
       local selections = current_picker:get_multi_selection()

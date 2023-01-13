@@ -2,7 +2,9 @@
 
 # telescope-media.nvim
 
-<https://user-images.githubusercontent.com/80379926/211297245-a6463782-93bd-435a-8e11-3283872f0337.mp4>
+
+<https://user-images.githubusercontent.com/80379926/212449487-3be4f933-617b-412f-b95a-3225647beab8.mp4>
+
 
 Preview IMAGES, PDF, EPUB, VIDEO, and FONTS from Neovim using Telescope.
 Keep in mind that this is a rewrite so some filetypes are not yet supported.
