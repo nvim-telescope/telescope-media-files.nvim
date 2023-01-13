@@ -106,6 +106,10 @@ require("telescope").setup({
     }
   }
 })
+-- NOTE: It should be noted that if media.attach_mappings key is added then
+-- NOTE: | on_confirm or, on_confirm_muliple will not be called as a consequence.
+-- NOTE: | you will have to either call a canned function or, call your own
+-- NOTE: | function manually inside attach_mappings.
 ```
 
 ## COMMANDS
@@ -203,6 +207,7 @@ Some of these are optional.
 - [x] Use image magick instead of fontforge for previewing fonts.
 - [x] Add text/binary file handlers.
 - [x] Add `cwd` support.
+- [x] Add `attach_mappings` support.
 - [ ] Add `img2txt` backend.
 - [ ] Add `gif2txt` backend.
 - [x] Add dialog boxes.

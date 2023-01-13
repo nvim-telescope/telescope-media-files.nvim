@@ -1,8 +1,18 @@
+---@tag media.rifle
+
+---@config { ["name"] = "RIFLE", ["field_heading"] = "Options", ["module"] = "telescope._extensions.rifle" }
+
+---@brief [[
+--- This module is the same as `scope.lua` except this one is for files that do not have an image
+--- to preview.
+---@brief ]]
+
 local M = {}
 
 local A = vim.api
 local N = vim.fn
 
+--- List of supported handlers.
 M.bullets = {
   ["viu"] = { "viu" },
   ["chafa"] = { "chafa" },
@@ -34,26 +44,28 @@ M.bullets = {
   ["7z"] = { "7z", "l", "-p" },
 }
 
-local function _call(self, ...)
-  local cmd = self
+local meta = {}
+
+function meta._call(this, ...)
+  local cmd = this
   for _, arg in ipairs({ ... }) do
     cmd = cmd + arg
   end
-  return cmd
+  return setmetatable(cmd, { __add = meta._add, __sub = meta._sub, __call = meta._call })
 end
 
-local function _add(self, item)
-  if type(item) == "table" then return vim.tbl_flatten({ self, item }) end
+function meta._add(this, item)
+  if type(item) == "table" then return vim.tbl_flatten({ this, item }) end
   if type(item) == "string" then
-    local copy = vim.list_slice(self)
+    local copy = vim.list_slice(this)
     table.insert(copy, item)
-    return copy
+    return setmetatable(copy, { __add = meta._add, __sub = meta._sub, __call = meta._call })
   end
   error("Only string and list are allowed.", vim.log.levels.ERROR)
 end
 
-local function _sub(self, item)
-  local copy = vim.list_slice(self)
+function meta._sub(this, item)
+  local copy = vim.list_slice(this)
   if type(item) == "string" then item = { item } end
   if type(item) == "table" then
     for _, value in ipairs(item) do
@@ -61,13 +73,13 @@ local function _sub(self, item)
         if arg == value then table.remove(copy, index) end
       end
     end
-    return copy
+    return setmetatable(copy, { __add = meta._add, __sub = meta._sub, __call = meta._call })
   end
   error("Only string and list are allowed.", vim.log.levels.ERROR)
 end
 
 for command, args in pairs(M.bullets) do
-  M.bullets[command] = setmetatable(args, { __add = _add, __sub = _sub, __call = _call })
+  M.bullets[command] = setmetatable(args, { __add = meta._add, __sub = meta._sub, __call = meta._call })
   M.bullets[command].has = N.executable(args[1]) == 1
 end
 

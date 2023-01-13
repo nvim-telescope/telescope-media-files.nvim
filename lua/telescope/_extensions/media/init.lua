@@ -46,7 +46,7 @@ local fn = vim.fn
 ---This is the default configuration.
 local _TelescopeMediaConfig = {
   backend = "none",
-  move = true,
+  move = false,
   on_confirm = canned.single.copy_path,
   on_confirm_muliple = canned.multiple.bulk_copy,
   cache_path = "/tmp/tele.media.cache",
@@ -111,21 +111,21 @@ end
 ---@private
 local function _media(options)
   options = F.if_nil(options, {})
-  options.attach_mappings = function(buffer, map)
+  options.attach_mappings = F.if_nil(function(buffer, map)
     actions.select_default:replace(function(prompt_buffer)
       local current_picker = action_state.get_current_picker(prompt_buffer)
       local selections = current_picker:get_multi_selection()
 
       actions.close(prompt_buffer)
       if #selections < 2 then
-        options.on_confirm(action_state.get_selected_entry()[1])
+        options.on_confirm(action_state.get_selected_entry())
       else
         selections = vim.tbl_map(function(item) return item[1] end, selections)
         options.on_confirm_muliple(selections)
       end
     end)
     return true
-  end
+  end)
 
   -- we need to do this everytime because a new table might be passed
   -- for example: one might want to run this through the cmdline or whatever

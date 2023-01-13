@@ -40,17 +40,22 @@ M.single = {}
 M.multiple = {}
 M.actions = {}
 
+local function _enpath(entry)
+  return (string.format("%s/%s", entry.cwd, entry.value):gsub("//", "/"))
+end
+
 -- Canned functions for single selection. {{{
 --- A canned function that takes in a filepath and just copies it into
 --- the |vim.v.register|.
----@param filepath string the path to be copied.
+---@param entry string the path to be copied.
 ---@param options table? additonal configurations.
 ---@field name_mod string string that would be passed onto |fnamemodify()|.
-function M.single.copy_path(filepath, options)
+function M.single.copy_path(entry, options)
+  entry = _enpath(entry)
   options = vim.tbl_extend("keep", vim.F.if_nil(options, {}), {
     name_mod = ":p",
   })
-  fn.setreg(vim.v.register, fn.fnamemodify(filepath, options.name_mod))
+  fn.setreg(vim.v.register, fn.fnamemodify(entry, options.name_mod))
 end
 
 --- Copy the data within the image itself to the clipboard.
@@ -59,11 +64,12 @@ end
 ---@field command string the clipboard util name. For example xclip.
 ---@field args table arguments that would be passed to the job command.
 ---@see Job for more options.
-function M.single.copy_image(filepath, options)
-  if not vim.tbl_contains({ "png", "jpg", "jpeg", "jiff", "webp" }, fn.fnamemodify(filepath, ":e")) then return end
+function M.single.copy_image(entry, options)
+  entry = _enpath(entry)
+  if not vim.tbl_contains({ "png", "jpg", "jpeg", "jiff", "webp" }, fn.fnamemodify(entry, ":e")) then return end
   options = vim.tbl_extend("keep", vim.F.if_nil(options, {}), {
     command = "xclip",
-    args = { "-selection", "clipboard", "-target", "image/png", filepath },
+    args = { "-selection", "clipboard", "-target", "image/png", entry },
   })
   Job:new(options):start()
 end
@@ -74,24 +80,24 @@ end
 ---@field command string the wallpaper setter util name. For example hydrogen.
 ---@field args table arguments that would be passed to the job command.
 ---@see Job for more options.
-function M.single.set_wallpaper(filepath, options)
-  if not vim.tbl_contains({ "png", "jpg", "jpeg", "jiff", "webp" }, fn.fnamemodify(filepath, ":e")) then return end
+function M.single.set_wallpaper(entry, options)
+  entry = _enpath(entry)
+  if not vim.tbl_contains({ "png", "jpg", "jpeg", "jiff", "webp" }, fn.fnamemodify(entry, ":e")) then return end
   vim.ui.select(
     {
-      "SEAMLESS",
       "TILE",
       "SCALE",
       "FILL",
       "CENTER",
     },
     {
-      prompt = "Select background behavior:",
+      prompt = "Background type:",
       format_item = function(item) return "Set background behavior to " .. item end,
     },
     function(choice)
       Job:new(vim.tbl_extend("keep", vim.F.if_nil(options, {}), {
         command = "feh",
-        args = { "--bg-" .. choice:lower(), filepath },
+        args = { "--bg-" .. choice:lower(), entry },
       })):start()
     end
   )
@@ -103,10 +109,11 @@ end
 ---@field command string the command that will be used to open the filepath.
 ---@field args table arguments that would be passed to the job command.
 ---@see Job for more options.
-function M.single.open_path(filepath, options)
+function M.single.open_path(entry, options)
+  entry = _enpath(entry)
   options = vim.tbl_extend("force", vim.F.if_nil(options, {}), {
     command = "xdg-open",
-    args = { filepath },
+    args = { entry },
   })
   Job:new(options):start()
 end
@@ -118,19 +125,15 @@ end
 ---@param options table? additonal configuration.
 ---@field name_mod string format string that will be passed onto |fnamemodify()|.
 function M.multiple.bulk_copy(entries, options)
-  options = vim.tbl_extend("keep", vim.F.if_nil(options, {}), {
-    name_mod = ":p",
-  })
-  vim.fn.setreg(
-    vim.v.register,
-    table.concat(vim.tbl_map(function(item) return fn.fnamemodify(item, options.name_mod) end, entries), "\n")
-  )
+  entries = vim.tbl_map(function(entry) return _enpath(entry) end, entries)
+  options = vim.tbl_extend("keep", vim.F.if_nil(options, {}), { name_mod = ":p" })
+  vim.fn.setreg(vim.v.register, table.concat(vim.tbl_map(function(item) return fn.fnamemodify(item, options.name_mod) end, entries), "\n"))
 end
 
 local function _split(prompt_buffer, command)
   local picker = actions_state.get_current_picker(prompt_buffer)
   local selections = picker:get_multi_selection()
-  local entry = actions_state.get_selected_entry()
+  local entry = _enpath(actions_state.get_selected_entry())
 
   actions.close(prompt_buffer)
   if #selections < 2 then
