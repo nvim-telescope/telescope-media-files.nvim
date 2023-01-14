@@ -34,7 +34,6 @@ local config = require("telescope.config")
 local action_state = require("telescope.actions.state")
 local make_entry = require("telescope.make_entry")
 
-local scope = require("telescope._extensions.media.scope")
 local canned = require("telescope._extensions.media.canned")
 local media_previewer = require("telescope._extensions.media.preview")
 
@@ -92,6 +91,7 @@ local function _find_command(options)
   end
   error("Invalid command!", vim.log.levels.ERROR)
 end
+
 -- }}}
 
 -- Main driver function. {{{
@@ -106,12 +106,12 @@ local function _setup(options)
   _TelescopeMediaConfig = vim.tbl_deep_extend("keep", options, _TelescopeMediaConfig)
 end
 
---- The main function that defines the picker.
+---The main function that defines the picker.
 ---@param options table plugin settings
 ---@private
 local function _media(options)
   options = F.if_nil(options, {})
-  options.attach_mappings = F.if_nil(options.attach_mappings, function(buffer, map)
+  options.attach_mappings = F.if_nil(options.attach_mappings, function()
     actions.select_default:replace(function(prompt_buffer)
       local current_picker = action_state.get_current_picker(prompt_buffer)
       local selections = current_picker:get_multi_selection()
@@ -155,6 +155,7 @@ local function _media(options)
     end
     if options.search_dirs then
       if command ~= "rg" and not options.search_file then options.find_command[#options.find_command + 1] = "." end
+      ---@diagnostic disable-next-line: missing-parameter
       vim.list_extend(options.find_command, options.search_dirs)
     end
   elseif command == "find" then
@@ -187,6 +188,7 @@ local function _media(options)
   ---@return table
   ---@private
   function options.get_preview_window() return popup_options.preview end
+
   options.entry_maker = make_entry.gen_from_file(options) -- support devicons
 
   local picker = pickers.new(options, {
@@ -199,9 +201,11 @@ local function _media(options)
   local line_count = vim.o.lines - vim.o.cmdheight
   if vim.o.laststatus ~= 0 then line_count = line_count - 1 end
 
+  ---@diagnostic disable-next-line: undefined-field
   popup_options = picker:get_window_options(vim.o.columns, line_count)
   picker:find()
 end
+
 -- }}}
 
 -- Plugin registration. {{{

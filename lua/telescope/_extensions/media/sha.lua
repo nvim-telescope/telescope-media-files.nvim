@@ -38,6 +38,7 @@ local unpack, table_concat, byte, char, string_rep, sub, string_format, floor, c
 --------------------------------------------------------------------------------
 
 -- 32-bit bitwise functions
+---@diagnostic disable-next-line: unused-local
 local AND, OR, XOR, SHL, SHR, ROL, ROR, HEX
 -- Only low 32 bits of function arguments matter, high bits are ignored
 -- The result of all functions (except HEX) is an integer (pair of integers) inside range 0..(2^32-1)
@@ -101,6 +102,7 @@ end
 
 function AND(x, y) return _and_or_xor(x, y) end
 
+---@diagnostic disable-next-line: unused-function, unused-local
 function OR(x, y) return _and_or_xor(x, y, 1) end
 
 function XOR(x, y, z) -- 2 or 3 arguments

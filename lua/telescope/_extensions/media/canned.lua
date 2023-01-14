@@ -26,14 +26,12 @@
 -- Imports and file-local definitions. {{{
 local M = {}
 
-local scope = require("telescope._extensions.media.scope")
-local Path = require("plenary.path")
 local Job = require("plenary.job")
 
 local actions = require("telescope.actions")
 local actions_state = require("telescope.actions.state")
 
-local fn = vim.fn
+local N = vim.fn
 -- }}}
 
 M.single = {}
@@ -55,7 +53,7 @@ function M.single.copy_path(entry, options)
   options = vim.tbl_extend("keep", vim.F.if_nil(options, {}), {
     name_mod = ":p",
   })
-  fn.setreg(vim.v.register, fn.fnamemodify(entry, options.name_mod))
+  N.setreg(vim.v.register, N.fnamemodify(entry, options.name_mod))
 end
 
 --- Copy the data within the image itself to the clipboard.
@@ -66,7 +64,7 @@ end
 ---@see Job for more options.
 function M.single.copy_image(entry, options)
   entry = _enpath(entry)
-  if not vim.tbl_contains({ "png", "jpg", "jpeg", "jiff", "webp" }, fn.fnamemodify(entry, ":e")) then return end
+  if not vim.tbl_contains({ "png", "jpg", "jpeg", "jiff", "webp" }, N.fnamemodify(entry, ":e")) then return end
   options = vim.tbl_extend("keep", vim.F.if_nil(options, {}), {
     command = "xclip",
     args = { "-selection", "clipboard", "-target", "image/png", entry },
@@ -82,7 +80,7 @@ end
 ---@see Job for more options.
 function M.single.set_wallpaper(entry, options)
   entry = _enpath(entry)
-  if not vim.tbl_contains({ "png", "jpg", "jpeg", "jiff", "webp" }, fn.fnamemodify(entry, ":e")) then return end
+  if not vim.tbl_contains({ "png", "jpg", "jpeg", "jiff", "webp" }, N.fnamemodify(entry, ":e")) then return end
   vim.ui.select(
     {
       "TILE",
@@ -127,7 +125,7 @@ end
 function M.multiple.bulk_copy(entries, options)
   entries = vim.tbl_map(function(entry) return _enpath(entry) end, entries)
   options = vim.tbl_extend("keep", vim.F.if_nil(options, {}), { name_mod = ":p" })
-  vim.fn.setreg(vim.v.register, table.concat(vim.tbl_map(function(item) return fn.fnamemodify(item, options.name_mod) end, entries), "\n"))
+  N.setreg(vim.v.register, table.concat(vim.tbl_map(function(item) return N.fnamemodify(item, options.name_mod) end, entries), "\n"))
 end
 
 local function _split(prompt_buffer, command)

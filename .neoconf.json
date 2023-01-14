@@ -1,0 +1,22 @@
+{
+  "neodev": {
+    "library": {
+      "enabled": true,
+      "plugins": [
+        "plenary.nvim",
+        "telescope.nvim"
+      ]
+    }
+  },
+  "neoconf": {
+    "plugins": {
+      "sumneko_lua": {
+        "enabled": true,
+        "Lua.workspace.library": [
+          "/usr/share/nvim/runtime",
+          "/usr/lib/nvim"
+        ]
+      }
+    }
+  }
+}

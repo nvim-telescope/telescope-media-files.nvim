@@ -3,16 +3,16 @@
 ---@config { ["name"] = "RIFLE", ["field_heading"] = "Options", ["module"] = "telescope._extensions.rifle" }
 
 ---@brief [[
---- This module is the same as `scope.lua` except this one is for files that do not have an image
---- to preview.
+--- This module is the same as `scope.lua` except this one is for files that do not need caching. These are
+--- mostly text based previews. Like viewing an image in terminal using ASCII or by using some escape codes.
+--- Which is again all text based.
 ---@brief ]]
 
 local M = {}
 
-local A = vim.api
 local N = vim.fn
 
---- List of supported handlers.
+--- List of supported handlers with presetted arguments.
 M.bullets = {
   ["viu"] = { "viu" },
   ["chafa"] = { "chafa" },
@@ -44,28 +44,34 @@ M.bullets = {
   ["7z"] = { "7z", "l", "-p" },
 }
 
+--- A table that will contain metatable functions. This is done so that we can recursively form a chain of
+--- metatable operations like: `bu.mu + "45" + "-lmao=5" + "--long" + "-L" - "--long" -> "mu view 45 -lmao=5 -L"`
+---@type table<function>
+---@private
 local meta = {}
 
-function meta._call(this, ...)
-  local cmd = this
-  for _, arg in ipairs({ ... }) do
-    cmd = cmd + arg
-  end
-  return setmetatable(cmd, { __add = meta._add, __sub = meta._sub, __call = meta._call })
-end
-
+--- A metatable function that allows appending arguments to a command/bullet.
+---@param this table self
+---@param item string|table the argument(s) that should be appended
+---@return table
+---@private
 function meta._add(this, item)
   if type(item) == "table" then return vim.tbl_flatten({ this, item }) end
   if type(item) == "string" then
-    local copy = vim.list_slice(this)
+    local copy = vim.deepcopy(this)
     table.insert(copy, item)
-    return setmetatable(copy, { __add = meta._add, __sub = meta._sub, __call = meta._call })
+    return setmetatable(copy, { __add = meta._add, __sub = meta._sub })
   end
   error("Only string and list are allowed.", vim.log.levels.ERROR)
 end
 
+--- A metatable function that allows removing matched arguments from a command/bullet
+---@param this table self
+---@param item string|table the argument(s) that should be removed
+---@return table
+---@private
 function meta._sub(this, item)
-  local copy = vim.list_slice(this)
+  local copy = vim.deepcopy(this)
   if type(item) == "string" then item = { item } end
   if type(item) == "table" then
     for _, value in ipairs(item) do
@@ -73,31 +79,34 @@ function meta._sub(this, item)
         if arg == value then table.remove(copy, index) end
       end
     end
-    return setmetatable(copy, { __add = meta._add, __sub = meta._sub, __call = meta._call })
+    return setmetatable(copy, { __add = meta._add, __sub = meta._sub })
   end
   error("Only string and list are allowed.", vim.log.levels.ERROR)
 end
 
 for command, args in pairs(M.bullets) do
-  M.bullets[command] = setmetatable(args, { __add = meta._add, __sub = meta._sub, __call = meta._call })
-  M.bullets[command].has = N.executable(args[1]) == 1
+  if N.executable(args[1]) ~= 1 then M.bullets[command] = nil
+  else M.bullets[command] = setmetatable(args, { __add = meta._add, __sub = meta._sub, __call = meta._call }) end
 end
 
+--- A convenience function that makes defining priorities and checking for executables easier.
+---@param extras string|table<string> extra argument(s) that should be appended
+---@param ... string handler commands based on priority i.e. if cava command is not installed then a fallback command (if specifed) will be used.
+---@return number|nil
 function M.orders(extras, ...)
   local binaries = { ... }
   for _, binary in ipairs(binaries) do
     local bullet = M.bullets[binary]
-    if bullet.has then return bullet + extras end
+    if bullet then return bullet + extras end
   end
 end
 
-function M.has(binary)
-  binary = M.bullets[binary]
-  if binary then return binary.has end
-  return false
-end
-
+---@type table<string, table>
 M.bullets = setmetatable(M.bullets, {
+  --- List all supported commands.
+  ---@param self table self
+  ---@param _ any ignored
+  ---@return table<string>
   __call = function(self, _) return vim.tbl_keys(self) end,
 })
 

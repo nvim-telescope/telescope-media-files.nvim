@@ -212,6 +212,7 @@ Some of these are optional.
 - [x] Add `attach_mappings` support.
 - [ ] Add `img2txt` backend.
 - [ ] Add `gif2txt` backend.
+- [ ] Add `ascii-image-converter` backend.
 - [x] Add dialog boxes.
 - [x] Add `rifle.lua`.
 - [x] Revise `rifle.lua`.

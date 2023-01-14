@@ -22,7 +22,6 @@ local Job = require("plenary.job")
 local Path = require("plenary.path")
 
 local SIGKILL = 9
-local EXIT_SUCCESS = 0
 
 ---@class Ueberzug
 ---@field fifo Path the path to the FIFO file

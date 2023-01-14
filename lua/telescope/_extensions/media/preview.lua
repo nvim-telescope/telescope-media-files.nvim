@@ -1,3 +1,4 @@
+---@diagnostic disable: param-type-mismatch
 ---@tag media.preview
 
 ---@config { ["name"] = "MEDIA PREVIEWER", ["field_heading"] = "Options", ["module"] = "telescope._extensions.preview" }
@@ -12,9 +13,6 @@ local Job = require("plenary.job")
 local Ueberzug = require("telescope._extensions.media.ueberzug")
 
 local util = require("telescope.utils")
-local state = require("telescope.state")
-local action = require("telescope.actions")
-
 local bview = require("telescope.previewers.buffer_previewer")
 local putil = require("telescope.previewers.utils")
 
@@ -73,18 +71,20 @@ local function redirect(buffer, extension, absolute, options)
   local mime = util.get_os_command_output(B.file + { "--brief", "--mime-type", absolute })[1]
   local _mime = vim.split(mime, "/", { plain = true })
   local window = options.preview.winid
+  local fill_binary = options.preview.fill.binary
+  local fill_file = options.preview.fill.file
 
   -- TODO: This looks vile. Cleanup is required.
-  if rifle.has("readelf") and vim.tbl_contains({ "x-executable", "x-pie-executable", "x-sharedlib" }, _mime[2]) then
+  if B.readelf and vim.tbl_contains({ "x-executable", "x-pie-executable", "x-sharedlib" }, _mime[2]) then
     return _run(B.readelf + absolute, buffer, options)
   elseif vim.tbl_contains({ "a", "ace", "alz", "arc", "arj", "bz", "bz2", "cab", "cpio", "deb", "gz", "jar", "lha", "lz", "lzh", "lzma", "lzo", "rpm", "rz", "t7z", "tar", "tbz", "tbz2", "tgz", "tlz", "txz", "tZ", "tzo", "war", "xpi", "xz", "Z", "zip" }, extension) then
     local command = rifle.orders(absolute, "bsdtar", "atool")
     if command then _run(command, buffer, options) end
-  elseif extension == "rar" and rifle.has("unrar") then
+  elseif extension == "rar" and B.unrar then
     return _run(B.unrar + absolute, buffer, options)
-  elseif extension == "7z" and rifle.has("7z") then
+  elseif extension == "7z" and B["7z"] then
     return _run(B["7z"] + absolute, buffer, options)
-  elseif extension == "pdf" and rifle.has("exiftool") then
+  elseif extension == "pdf" and B.exiftool then
     return _run(B.exiftool + absolute, buffer, options)
   elseif extension == "torrent" then
     local command = rifle.orders(absolute, "transmission-show", "aria2c")
@@ -92,32 +92,32 @@ local function redirect(buffer, extension, absolute, options)
   elseif vim.tbl_contains({ "odt", "sxw", "ods", "odp" }, extension) then
     local command = rifle.orders(absolute, "odt2txt", "pandoc")
     if command then return _run(command, buffer, options) end
-  elseif extension == "xlsx" and rifle.has("xlsx2csv") then
+  elseif extension == "xlsx" and B.xlsx2csv then
     return _run(B.xlsx2csv + absolute, buffer, options)
-  elseif mutil.any(mime, "wordprocessingml%.document$", "/epub%+zip$", "/x%-fictionbook%+xml$") and rifle.has("pandoc") then
+  elseif mutil.any(mime, "wordprocessingml%.document$", "/epub%+zip$", "/x%-fictionbook%+xml$") and B.pandoc then
     return _run(B.pandoc + absolute, buffer, options, "markdown")
-  elseif mutil.any(mime, "text/rtf$", "msword$") and rifle.has("catdoc") then
+  elseif mutil.any(mime, "text/rtf$", "msword$") and B.catdoc then
     return _run(B.catdoc + absolute, buffer, options)
-  elseif mutil.any(_mime[2], "ms%-excel$") and rifle.has("xls2csv") then
+  elseif mutil.any(_mime[2], "ms%-excel$") and B.xls2csv then
     return _run(B.xls2csv + absolute, buffer, options)
-  elseif mutil.any(mime, "message/rfc822$") and rifle.has("mu") then
+  elseif mutil.any(mime, "message/rfc822$") and B.mu then
     return _run(B.mu + absolute, buffer, options)
   elseif mutil.any(mime, "^image/vnd%.djvu") then
     local command = rifle.orders(absolute, "djvutxt", "exiftool")
     if command then return mutil.termopen(buffer, command) end
-  elseif mutil.any(mime, "^image/") and rifle.has("exiftool") then
+  elseif mutil.any(mime, "^image/") and B.exiftool then
     return _run(B.exiftool + absolute, buffer, options)
   elseif mutil.any(mime, "^audio/", "^video/") then
     local command = rifle.orders(absolute, "mediainfo", "exiftool")
     if command then return mutil.termopen(buffer, command) end
   elseif extension == "md" then
-    if rifle.has("glow") then return mutil.termopen(buffer, B.glow + absolute) end
+    if B.glow then return mutil.termopen(buffer, B.glow + absolute) end
     return true
   elseif vim.tbl_contains({ "htm", "html", "xhtml", "xhtm" }, extension) then
     local command = rifle.orders(absolute, "lynx", "w3m", "elinks", "pandoc")
     if command then return _run(command, buffer, options, "markdown") end
     return true
-  elseif extension == "ipynb" and rifle.has("jupyter") then
+  elseif extension == "ipynb" and B.jupyter then
     return _run(B.jupyter + absolute, buffer, options, "markdown")
   elseif _mime[2] == "json" or extension == "json" then
     local command = rifle.orders(absolute, "jq", "python")
@@ -131,7 +131,7 @@ local function redirect(buffer, extension, absolute, options)
   end
 
   -- last line of defence
-  if rifle.has("file") then
+  if B.file then
     local results = util.get_os_command_output(B.file + absolute)[1]
     _dial(buffer, window, vim.split(results, ": ", { plain = true })[2], fill_binary)
     return false
@@ -155,9 +155,6 @@ local function _filetype_hook(filepath, buffer, options)
   local absolute = N.fnamemodify(filepath, ":p")
   local handler = scope.supports[extension]
 
-  local fill_binary = options.preview.fill.binary
-  local fill_file = options.preview.fill.file
-
   if handler then
     local _cache
     -- stylua: ignore start
@@ -170,16 +167,16 @@ local function _filetype_hook(filepath, buffer, options)
     if options.backend == "ueberzug" then
       options._ueberzug:send({ path = _cache, x = win.col, y = win.line, width = win.width, height = win.height })
     elseif options.backend == "viu" then
-      if not rifle.has("viu") then error("viu isn't in PATH.", ERROR) end
+      if not B.viu then error("viu isn't in PATH.", ERROR) end
       mutil.termopen(buffer, B.viu + _cache)
     elseif options.backend == "chafa" then
-      if not rifle.has("chafa") then error("chafa isn't in PATH.", ERROR) end
+      if not B.chafa then error("chafa isn't in PATH.", ERROR) end
       mutil.termopen(buffer, B.chafa + _cache)
     elseif options.backend == "jp2a" then
-      if not rifle.has("jp2a") then error("jp2a isn't in PATH.", ERROR) end
+      if not B.jp2a then error("jp2a isn't in PATH.", ERROR) end
       mutil.termopen(buffer, B.jp2a + _cache)
     elseif options.backend == "catimg" then
-      if not rifle.has("catimg") then error("catimg isn't in PATH.", ERROR) end
+      if not B.catimg then error("catimg isn't in PATH.", ERROR) end
       mutil.termopen(buffer, B.catimg + _cache)
     else
       return redirect(buffer, extension, absolute, options)
@@ -208,7 +205,7 @@ local _MediaPreview = util.make_default_callable(function(options)
 
   return bview.new_buffer_previewer({
     define_preview = function(self, entry, status)
-      entry_full = (string.format("%s/%s", entry.cwd, entry.value):gsub("//", "/"))
+      local entry_full = (string.format("%s/%s", entry.cwd, entry.value):gsub("//", "/"))
       -- stylua: ignore start
       U.fs_access(entry_full, "R", vim.schedule_wrap(function(_, permission)
         if permission then
@@ -226,14 +223,14 @@ local _MediaPreview = util.make_default_callable(function(options)
       scope.cleanup(options.cache_path)
       return F.if_nil(self.state, {})
     end,
-    teardown = function(self)
+    teardown = function()
       if options.backend == "ueberzug" and options._ueberzug then
         options._ueberzug:kill()
         options._ueberzug = nil
       end
     end,
   })
-end, options)
+end)
 
 return _MediaPreview
 -- }}}
