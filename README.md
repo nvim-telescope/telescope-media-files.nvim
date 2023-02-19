@@ -3,8 +3,6 @@ Preview images, pdf, epub, video, and fonts from Neovim using Telescope.
 
 ![Demo](https://i.imgur.com/wEO04TK.gif)
 
-**ONLY SUPPORTED ON LINUX**
-
 ## Install
 ```viml
 Plug 'nvim-lua/popup.nvim'
@@ -31,7 +29,8 @@ require'telescope'.setup {
       -- filetypes whitelist
       -- defaults to {"png", "jpg", "mp4", "webm", "pdf"}
       filetypes = {"png", "webp", "jpg", "jpeg"},
-      find_cmd = "rg" -- find command (defaults to `fd`)
+      -- find command (defaults to `fd`)
+      find_cmd = "rg"
     }
   },
 }
@@ -49,7 +48,8 @@ When you press `<CR>` on a selected file, it will copy its relative path to the 
 
 
 ## Prerequisites
-* [Überzug](https://github.com/seebye/ueberzug) (required for image support)
+* [Chafa](https://hpjansson.org/chafa/) (required for image support)
+* [ImageMagick](https://imagemagick.org/index.php) (optional, for svg previews)
 * [fd](https://github.com/sharkdp/fd) / [rg](https://github.com/BurntSushi/ripgrep) / [find](https://man7.org/linux/man-pages/man1/find.1.html) or fdfind in Ubuntu/Debian.
 * [ffmpegthumbnailer](https://github.com/dirkvdb/ffmpegthumbnailer) (optional, for video preview support)
 * [pdftoppm](https://linux.die.net/man/1/pdftoppm) (optional, for pdf preview support. Available in the AUR as **poppler** package.)

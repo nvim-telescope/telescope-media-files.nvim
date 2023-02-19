@@ -19,6 +19,7 @@ local M = {}
 
 local filetypes = {}
 local find_cmd = ""
+local image_stretch = 250
 
 M.base_directory=""
 M.media_preview = defaulter(function(opts)
@@ -36,7 +37,8 @@ M.media_preview = defaulter(function(opts)
         preview.col ,
         preview.line + 1 ,
         preview.width ,
-        preview.height
+        preview.height,
+        image_stretch
       }
     end
   }
@@ -130,6 +132,7 @@ return require('telescope').register_extension {
   setup = function(ext_config)
     filetypes = ext_config.filetypes or {"png", "jpg", "gif", "mp4", "webm", "pdf"}
     find_cmd = ext_config.find_cmd or "fd"
+    image_stretch = ext_config.image_stretch or 250
   end,
   exports = {
     media_files = M.media_files
