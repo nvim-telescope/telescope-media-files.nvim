@@ -90,17 +90,19 @@ function M.media_files(opts)
   local sourced_file = require('plenary.debug_utils').sourced_filepath()
   M.base_directory = vim.fn.fnamemodify(sourced_file, ":h:h:h:h")
   opts = opts or {}
-  opts.attach_mappings= function(prompt_bufnr,map)
-    actions.select_default:replace(function()
-      local entry = action_state.get_selected_entry()
-      actions.close(prompt_bufnr)
-      if entry[1] then
-        local filename = entry[1]
-        vim.fn.setreg(vim.v.register, filename)
-        vim.notify("The image path has been copied!")
-      end
-    end)
-    return true
+  if not opts.attach_mappings then
+    opts.attach_mappings= function(prompt_bufnr,map)
+      actions.select_default:replace(function()
+        local entry = action_state.get_selected_entry()
+        actions.close(prompt_bufnr)
+        if entry[1] then
+          local filename = entry[1]
+          vim.fn.setreg(vim.v.register, filename)
+          vim.notify("The image path has been copied!")
+        end
+      end)
+      return true
+    end
   end
   opts.path_display = { "shorten" }
 
