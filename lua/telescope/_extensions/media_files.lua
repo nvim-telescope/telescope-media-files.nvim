@@ -90,7 +90,7 @@ function M.media_files(opts)
   local sourced_file = require('plenary.debug_utils').sourced_filepath()
   M.base_directory = vim.fn.fnamemodify(sourced_file, ":h:h:h:h")
   opts = opts or {}
-  opts.attach_mappings= function(prompt_bufnr,map)
+  opts.attach_mappings= opts.attach_mappings or function(prompt_bufnr,map)
     actions.select_default:replace(function()
       local entry = action_state.get_selected_entry()
       actions.close(prompt_bufnr)
