@@ -34,7 +34,7 @@ function draw_preview {
       render_at_size "${5}" "${6}" "${2}" "${7}"
 
     elif [[ "$1" == "videopreview" ]]; then
-      if ! command -v viu &> /dev/null; then
+      if ! command -v ffmpegthumbnailer &> /dev/null; then
         echo "ffmpegthumbnailer could not be found in your path,\nplease install it to display video previews"
         exit
       fi
@@ -47,7 +47,7 @@ function draw_preview {
     elif [[ "$1" == "pdfpreview" ]]; then
       path="${2##*/}"
         echo -e "Loading preview..\nFile: $path"
-        [[ ! -f "${TMP_FOLDER}/${path}.png" ]] && pdftoppm -png -singlefile "$2" "${TMP_FOLDER}/${path}.png"
+        [[ ! -f "${TMP_FOLDER}/${path}.png" ]] && pdftoppm -png -singlefile "$2" "${TMP_FOLDER}/${path}"
         clear
         render_at_size "${5}" "${6}" "${TMP_FOLDER}/${path}.png" "${7}"
     fi
@@ -55,6 +55,7 @@ function draw_preview {
 
 function parse_options {
     extension="${1##*.}"
+    extension="${extension,,}"
     case $extension in
     jpg | png | jpeg | webp | svg)
         draw_preview  imagepreview "$1" $2 $3 $4 $5 $6
