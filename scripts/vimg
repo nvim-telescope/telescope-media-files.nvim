@@ -19,7 +19,7 @@ function render_at_size {
 
 function draw_preview {
     if ! command -v chafa &> /dev/null; then
-      echo "chafa could not be found in your path,\nplease install it to display media content"
+      echo -e "chafa could not be found in your path,\nplease install it to display media content"
       exit
     fi
 
@@ -35,7 +35,7 @@ function draw_preview {
 
     elif [[ "$1" == "videopreview" ]]; then
       if ! command -v viu &> /dev/null; then
-        echo "ffmpegthumbnailer could not be found in your path,\nplease install it to display video previews"
+        echo -e "ffmpegthumbnailer could not be found in your path,\nplease install it to display video previews"
         exit
       fi
       path="${2##*/}"
