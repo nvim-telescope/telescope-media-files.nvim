@@ -1,20 +1,3 @@
----@tag media
-
----@config { ["name"] = "INTRODUCTION", ["field_heading"] = "Options", ["module"] = "telescope._extensions.media" }
-
----@brief [[
---- telescope-media.nvim is a telescope extension that allows you to view both media files
---- and text files. It basically, combines the features of `find_files` and what this plugin
---- used to be i.e. a image viewer.
----
---- The main idea at the moment is to extract covers, thumbnails embedded covers, etc from
---- audio, video, etc. And, lower the quality and save them at a directory.
---- We can then access those files and view them instead, all the while keeping the paths
---- (entries) the same.
---- Image files will only be degraded and we won't need to extract or, unzip anything (duh).
----@brief ]]
-
--- Imports and file-local definitions. {{{
 local present, telescope = pcall(require, "telescope")
 
 if not present then
@@ -39,10 +22,7 @@ local media_previewer = require("telescope._extensions.media.preview")
 
 local F = vim.F
 local fn = vim.fn
--- }}}
 
--- The default configuration. {{{
----This is the default configuration.
 local _TelescopeMediaConfig = {
   backend = "none",
   move = false,
@@ -67,13 +47,7 @@ local _TelescopeMediaConfig = {
     },
   },
 }
--- }}}
 
--- Helpers {{{
---- Find command helper.
----@param options table plugin settings
----@return table<string>|fun(options: table): table<string>
----@see telescope.previewers.buffer_previewer
 local function _find_command(options)
   if options.find_command then
     if type(options.find_command) == "function" then return options.find_command(options) end
@@ -92,23 +66,12 @@ local function _find_command(options)
   error("Invalid command!", vim.log.levels.ERROR)
 end
 
--- }}}
-
--- Main driver function. {{{
---- This function will be called by telescope when `load_extension` will be called.
---- Essentially, this will fetch options from the `telescope.config.extensions.media`
---- section. So, make sure to have that configured.
----@param options table plugin settings
----@private
 local function _setup(options)
   options = F.if_nil(options, {})
   options.find_command = _find_command(options)
   _TelescopeMediaConfig = vim.tbl_deep_extend("keep", options, _TelescopeMediaConfig)
 end
 
----The main function that defines the picker.
----@param options table plugin settings
----@private
 local function _media(options)
   options = F.if_nil(options, {})
   options.attach_mappings = F.if_nil(options.attach_mappings, function()
@@ -127,12 +90,8 @@ local function _media(options)
     return true
   end)
 
-  -- we need to do this everytime because a new table might be passed
-  -- for example: one might want to run this through the cmdline or whatever
   options = vim.tbl_deep_extend("keep", options, _TelescopeMediaConfig)
 
-  -- Validate find_command {{{
-  ---@see telescope.previewers.buffer_previewer
   local command = options.find_command[1]
   if options.search_dirs then
     for key, value in pairs(options.search_dirs) do
@@ -155,7 +114,6 @@ local function _media(options)
     end
     if options.search_dirs then
       if command ~= "rg" and not options.search_file then options.find_command[#options.find_command + 1] = "." end
-      ---@diagnostic disable-next-line: missing-parameter
       vim.list_extend(options.find_command, options.search_dirs)
     end
   elseif command == "find" then
@@ -181,12 +139,8 @@ local function _media(options)
       end
     end
   end
-  -- }}}
 
   local popup_options = {}
-  ---get preview window geometry.
-  ---@return table
-  ---@private
   function options.get_preview_window() return popup_options.preview end
 
   options.entry_maker = make_entry.gen_from_file(options) -- support devicons
@@ -201,14 +155,10 @@ local function _media(options)
   local line_count = vim.o.lines - vim.o.cmdheight
   if vim.o.laststatus ~= 0 then line_count = line_count - 1 end
 
-  ---@diagnostic disable-next-line: undefined-field
   popup_options = picker:get_window_options(vim.o.columns, line_count)
   picker:find()
 end
 
--- }}}
-
--- Plugin registration. {{{
 -- TODO: Add presets like image_media, font_media, audio_media, etc.
 return telescope.register_extension({
   setup = _setup,
@@ -216,6 +166,3 @@ return telescope.register_extension({
     media = _media,
   },
 })
--- }}}
-
--- vim:filetype=lua:fileencoding=utf-8

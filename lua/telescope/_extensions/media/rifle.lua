@@ -1,18 +1,7 @@
----@tag media.rifle
-
----@config { ["name"] = "RIFLE", ["field_heading"] = "Options", ["module"] = "telescope._extensions.rifle" }
-
----@brief [[
---- This module is the same as `scope.lua` except this one is for files that do not need caching. These are
---- mostly text based previews. Like viewing an image in terminal using ASCII or by using some escape codes.
---- Which is again all text based.
----@brief ]]
-
 local M = {}
 
 local N = vim.fn
 
---- List of supported handlers with presetted arguments.
 M.bullets = {
   ["viu"] = { "viu" },
   ["chafa"] = { "chafa" },
@@ -44,17 +33,8 @@ M.bullets = {
   ["7z"] = { "7z", "l", "-p" },
 }
 
---- A table that will contain metatable functions. This is done so that we can recursively form a chain of
---- metatable operations like: `bu.mu + "45" + "-lmao=5" + "--long" + "-L" - "--long" -> "mu view 45 -lmao=5 -L"`
----@type table<function>
----@private
 local meta = {}
 
---- A metatable function that allows appending arguments to a command/bullet.
----@param this table self
----@param item string|table the argument(s) that should be appended
----@return table
----@private
 function meta._add(this, item)
   if type(item) == "table" then return vim.tbl_flatten({ this, item }) end
   if type(item) == "string" then
@@ -65,11 +45,6 @@ function meta._add(this, item)
   error("Only string and list are allowed.", vim.log.levels.ERROR)
 end
 
---- A metatable function that allows removing matched arguments from a command/bullet
----@param this table self
----@param item string|table the argument(s) that should be removed
----@return table
----@private
 function meta._sub(this, item)
   local copy = vim.deepcopy(this)
   if type(item) == "string" then item = { item } end
@@ -89,10 +64,6 @@ for command, args in pairs(M.bullets) do
   else M.bullets[command] = setmetatable(args, { __add = meta._add, __sub = meta._sub, __call = meta._call }) end
 end
 
---- A convenience function that makes defining priorities and checking for executables easier.
----@param extras string|table<string> extra argument(s) that should be appended
----@param ... string handler commands based on priority i.e. if cava command is not installed then a fallback command (if specifed) will be used.
----@return number|nil
 function M.orders(extras, ...)
   local binaries = { ... }
   for _, binary in ipairs(binaries) do
@@ -101,15 +72,8 @@ function M.orders(extras, ...)
   end
 end
 
----@type table<string, table>
 M.bullets = setmetatable(M.bullets, {
-  --- List all supported commands.
-  ---@param self table self
-  ---@param _ any ignored
-  ---@return table<string>
   __call = function(self, _) return vim.tbl_keys(self) end,
 })
 
 return M
-
--- vim:filetype=lua:fileencoding=utf-8

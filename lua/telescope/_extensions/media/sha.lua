@@ -1,8 +1,3 @@
----@tag media.sha
-
----@config { ["name"] = "SHA", ["field_heading"] = "Options", ["module"] = "telescope._extensions.media.sha" }
-
----@brief [[
 --- This module contains functions to calculate SHA2 digest.
 ---    Supported hashes: SHA-224, SHA-256, SHA-384, SHA-512, SHA-512/224, SHA-512/256
 ---    This is a pure-Lua module, compatible with Lua 5.1
@@ -17,9 +12,7 @@
 ---    See file "sha2for51_test.lua" for more examples.
 ---
 --- Stolen from https://gist.github.com/PedroAlvesV/ea80f6724df49ace29eed03e7f75b589
----@brief ]]
 
--- Definitions and helper functions. {{{
 local unpack, table_concat, byte, char, string_rep, sub, string_format, floor, ceil, min, max =
   unpack,
   table.concat,
@@ -111,7 +104,6 @@ function XOR(x, y, z) -- 2 or 3 arguments
 end
 
 function HEX(x) return string_format("%08x", x % 4294967296) end
--- }}}
 
 -- Arrays of SHA2 "magic numbers"
 local sha2_K_lo, sha2_K_hi, sha2_H_lo, sha2_H_hi = {}, {}, {}, {}
@@ -457,5 +449,3 @@ local sha2for51 = {
 }
 
 return sha2for51
-
--- vim:filetype=lua:fileencoding=utf-8

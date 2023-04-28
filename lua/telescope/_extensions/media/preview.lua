@@ -1,13 +1,3 @@
----@diagnostic disable: param-type-mismatch
----@tag media.preview
-
----@config { ["name"] = "MEDIA PREVIEWER", ["field_heading"] = "Options", ["module"] = "telescope._extensions.preview" }
-
----@brief [[
---- Implementation of a custom previewer.
----@brief ]]
-
--- Imports {{{
 local Path = require("plenary.path")
 local Job = require("plenary.job")
 local Ueberzug = require("telescope._extensions.media.ueberzug")
@@ -28,25 +18,9 @@ local U = vim.loop
 local N = vim.fn
 local A = vim.api
 local B = rifle.bullets
--- }}}
 
--- Helpers {{{
---- Wrapper around `previewer_utils.set_preview_message` which suppresses errors.
----@param buffer integer buffer number of the previewer
----@param window integer window id of the previewer window
----@param message string message to display
----@param fill string fill the buffer with this character
----@private
 local function _dial(buffer, window, message, fill) pcall(putil.set_preview_message, buffer, window, message, fill) end
 
--- stylua: ignore start
---- Start timed job. Display a dialog box when the job errors or, when the job fails to complete.
----@param command table command to run
----@param buffer integer previewer buffer number
----@param options table plugin settings
----@param extension string? current file extension
----@return boolean
----@private
 local function _run(command, buffer, options, extension)
   local task = Job:new(command)
   local ok, result, code = pcall(Job.sync, task, options.preview.timeout, options.preview.wait, options.preview.redraw)
@@ -59,14 +33,6 @@ local function _run(command, buffer, options, extension)
   return false
 end
 
---- Handle other filetypes that does not have image to preview. Additionally, also
---- apply fallback previews.
----@param buffer integer the previewer buffer number
----@param extension string file extension
----@param absolute string absolute path to the entry
----@param options table plugin settings
----@return boolean
----@private
 local function redirect(buffer, extension, absolute, options)
   local mime = util.get_os_command_output(B.file + { "--brief", "--mime-type", absolute })[1]
   local _mime = vim.split(mime, "/", { plain = true })
@@ -140,16 +106,7 @@ local function redirect(buffer, extension, absolute, options)
   _dial(buffer, window, "CANNOT PREVIEW FILE", fill_file)
   return false
 end
--- stylua: ignore end
--- }}}
 
--- Hook {{{
---- A hook callback which will be called when any filetype is encountered.
----@param filepath string the current selected entry
----@param buffer integer previewer buffer number
----@param options table plugin settings
----@return boolean
----@private
 local function _filetype_hook(filepath, buffer, options)
   local extension = N.fnamemodify(filepath, ":e"):lower()
   local absolute = N.fnamemodify(filepath, ":p")
@@ -185,11 +142,7 @@ local function _filetype_hook(filepath, buffer, options)
   end
   return redirect(buffer, extension, absolute, options)
 end
--- }}}
 
--- Previewer {{{
---- A custom previewer that allows previewing images.
----@private
 local _MediaPreview = util.make_default_callable(function(options)
   options.cache_path = Path:new(options.cache_path)
   scope.load_caches(options.cache_path)
@@ -233,6 +186,3 @@ local _MediaPreview = util.make_default_callable(function(options)
 end)
 
 return _MediaPreview
--- }}}
-
--- vim:filetype=lua:fileencoding=utf-8

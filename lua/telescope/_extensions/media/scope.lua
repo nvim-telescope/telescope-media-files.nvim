@@ -1,13 +1,3 @@
----@tag media.scope
-
----@config { ["name"] = "SCOPE", ["field_heading"] = "Options", ["module"] = "telescope._extensions.media.scope" }
-
----@brief [[
---- Functions and utils that will handle caching and supplying Ueberzug or, any other
---- backend with the cache path.
----@brief ]]
-
--- Imports and file-local definitions. {{{
 local M = {}
 
 local Path = require("plenary.path")
@@ -20,27 +10,14 @@ local uv = vim.loop
 local F = vim.F
 local NULL = vim.NIL
 
---- All filenames that are located at the `cache_path`.
----@type table<string>
 M.caches = {}
 
----@alias NULL NULL
-
---- Handler or, cache maker functions for specific filetypes and filetype categories.
---- Like for example `image_handler` is a filetype category which consists of JPGs, PNGs, JIFFs, etc.
---- And `gif_handler` for example, can be called a specialized handler.
----@type table<string, fun(filepath: string, cache_path: Path, options: tablelib): NULL|string>
 M.handlers = {}
 
---- Handler registry. Hardcoded handlers for individual filetypes.
---- Calling the table will return a table of currently supported filetypes.
----@type table<string, fun(filepath: string, cache_path: Path, options: table): NULL|string>|fun(): table<string>
 M.supports = setmetatable({}, {
   __call = function(self) return vim.tbl_keys(self) end,
 })
--- }}}
 
--- Helper functions. {{{
 function M.load_caches(cache_path)
   if cache_path:is_dir() then
     local files = fn.readdir(cache_path.filename)
@@ -66,20 +43,13 @@ function M.cleanup(cache_path)
   })
 end
 
----@private
 local function _encode_options(filepath, cache_path, options)
   if options.alias then filepath = options.alias end
   local encoded_path = sha.sha512(uv.fs_stat(filepath).ino .. filepath):upper() .. ".jpg"
   local cached_path = cache_path.filename .. "/" .. encoded_path
   return F.if_nil(M.caches[encoded_path] and cached_path, false), encoded_path, cached_path
 end
--- }}}
 
--- Handler functions. {{{
----@param image_path string
----@param cache_path Path
----@param options tablelib
----@return unknown
 function M.handlers.image_handler(image_path, cache_path, options)
   local in_cache, sha_path, cached_path = _encode_options(image_path, cache_path, options)
   if in_cache then return in_cache end
@@ -87,10 +57,6 @@ function M.handlers.image_handler(image_path, cache_path, options)
   return image_path
 end
 
----@param font_path string
----@param cache_path Path
----@param options tablelib
----@return unknown
 function M.handlers.font_handler(font_path, cache_path, options)
   local in_cache, sha_path, cached_path = _encode_options(font_path, cache_path, options)
   if in_cache then return in_cache end
@@ -100,10 +66,6 @@ function M.handlers.font_handler(font_path, cache_path, options)
   return NULL
 end
 
----@param video_path string
----@param cache_path Path
----@param options tablelib
----@return unknown
 function M.handlers.video_handler(video_path, cache_path, options)
   local in_cache, sha_path, cached_path = _encode_options(video_path, cache_path, options)
   if in_cache then return in_cache end
@@ -119,10 +81,6 @@ function M.handlers.video_handler(video_path, cache_path, options)
   return NULL
 end
 
----@param gif_path string
----@param cache_path Path
----@param options tablelib
----@return unknown
 function M.handlers.gif_handler(gif_path, cache_path, options)
   local in_cache, sha_path, cached_path = _encode_options(gif_path, cache_path, options)
   if in_cache then return in_cache end
@@ -133,10 +91,6 @@ function M.handlers.gif_handler(gif_path, cache_path, options)
   return NULL
 end
 
----@param audio_path string
----@param cache_path Path
----@param options tablelib
----@return unknown
 function M.handlers.audio_handler(audio_path, cache_path, options)
   local in_cache, sha_path, cached_path = _encode_options(audio_path, cache_path, options)
   if in_cache then return in_cache end
@@ -146,10 +100,6 @@ function M.handlers.audio_handler(audio_path, cache_path, options)
   return NULL
 end
 
----@param pdf_path string
----@param cache_path Path
----@param options tablelib
----@return unknown
 function M.handlers.pdf_handler(pdf_path, cache_path, options)
   local in_cache, sha_path, cached_path = _encode_options(pdf_path, cache_path, options)
   if in_cache then return in_cache end
@@ -159,10 +109,6 @@ function M.handlers.pdf_handler(pdf_path, cache_path, options)
   return NULL
 end
 
----@param epub_path string
----@param cache_path Path
----@param options tablelib
----@return unknown
 function M.handlers.epub_handler(epub_path, cache_path, options)
   local in_cache, sha_path, cached_path = _encode_options(epub_path, cache_path, options)
   if in_cache then return in_cache end
@@ -177,9 +123,7 @@ function M.handlers.epub_handler(epub_path, cache_path, options)
   end)
   return NULL
 end
--- }}}
 
--- Adding handlers to supported filetypes. {{{
 M.supports["pdf"] = M.handlers.pdf_handler
 
 M.supports["gif"] = M.handlers.gif_handler
@@ -228,6 +172,3 @@ M.supports["cda"] = M.handlers.audio_handler
 M.supports["wma"] = M.handlers.audio_handler
 
 return M
--- }}}
-
--- vim:filetype=lua:fileencoding=utf-8
