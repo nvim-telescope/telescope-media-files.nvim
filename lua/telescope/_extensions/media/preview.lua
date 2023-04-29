@@ -122,7 +122,7 @@ local function _filetype_hook(filepath, buffer, options)
 
     local win = options.get_preview_window()
     if options.backend == "ueberzug" then
-      options._ueberzug:send({ path = _cache, x = win.col, y = win.line, width = win.width, height = win.height })
+      options._ueberzug:send({ path = _cache, x = win.col - 1, y = win.line, width = win.width, height = win.height })
     elseif options.backend == "viu" then
       if not B.viu then error("viu isn't in PATH.", ERROR) end
       mutil.termopen(buffer, B.viu + _cache)
