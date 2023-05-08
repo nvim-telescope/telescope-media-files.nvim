@@ -1,7 +1,7 @@
 local M = {}
 
 local A = vim.api
-local N = vim.fn
+local V = vim.fn
 
 function M.any(item, ...)
   local patterns = { ... }
@@ -14,7 +14,7 @@ end
 
 function M.termopen(buffer, command)
   A.nvim_buf_call(buffer, function()
-    if A.nvim_buf_is_valid(buffer) and A.nvim_buf_get_option(buffer, "modifiable") then N.termopen(command) end
+    if A.nvim_buf_is_valid(buffer) and A.nvim_buf_get_option(buffer, "modifiable") then V.termopen(command) end
   end)
   return false
 end

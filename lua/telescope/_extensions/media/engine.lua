@@ -1,7 +1,7 @@
 local M = {}
 
 local Job = require("plenary.job")
-local fn = vim.fn
+local V = vim.fn
 
 local function _Task(options)
   local task = Job:new(vim.tbl_extend("keep", options, {
@@ -151,7 +151,7 @@ function M.pdftoppm(pdf_path, output_path, options, on_exit)
       "-tiffcompression",
       "jpeg",
       pdf_path,
-      fn.fnamemodify(output_path, ":r"),
+      V.fnamemodify(output_path, ":r"),
     },
     on_exit = on_exit,
   })

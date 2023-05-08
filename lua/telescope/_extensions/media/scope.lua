@@ -5,9 +5,9 @@ local sha = require("telescope._extensions.media.sha")
 local engine = require("telescope._extensions.media.engine")
 local scandir = require("plenary.scandir")
 
-local fn = vim.fn
+local V = vim.fn
 local uv = vim.loop
-local F = vim.F
+local if_nil = vim.F.if_nil
 local NULL = vim.NIL
 
 M.caches = {}
@@ -20,7 +20,7 @@ M.supports = setmetatable({}, {
 
 function M.load_caches(cache_path)
   if cache_path:is_dir() then
-    local files = fn.readdir(cache_path.filename)
+    local files = V.readdir(cache_path.filename)
     for _, file in ipairs(files) do
       M.caches[file] = true
     end
@@ -34,7 +34,7 @@ function M.cleanup(cache_path)
     add_dirs = true,
     hidden = true,
     on_insert = function(path)
-      local stem = fn.fnamemodify(path, ":t:r")
+      local stem = V.fnamemodify(path, ":t:r")
       if #stem ~= 128 then
         path = Path:new(path)
         if path:exists() then path:rm() end
@@ -47,7 +47,7 @@ local function _encode_options(filepath, cache_path, options)
   if options.alias then filepath = options.alias end
   local encoded_path = sha.sha512(uv.fs_stat(filepath).ino .. filepath):upper() .. ".jpg"
   local cached_path = cache_path.filename .. "/" .. encoded_path
-  return F.if_nil(M.caches[encoded_path] and cached_path, false), encoded_path, cached_path
+  return if_nil(M.caches[encoded_path] and cached_path, false), encoded_path, cached_path
 end
 
 function M.handlers.image_handler(image_path, cache_path, options)

@@ -13,9 +13,9 @@ local mutil = require("telescope._extensions.media.util")
 local NULL = vim.NIL
 local ERROR = vim.log.levels.ERROR
 
-local F = vim.F
+local if_nil = vim.F.if_nil
 local U = vim.loop
-local N = vim.fn
+local V = vim.fn
 local A = vim.api
 local B = rifle.bullets
 
@@ -27,7 +27,7 @@ local function _run(command, buffer, options, extension)
   if ok then
     if code == 0 then
       pcall(A.nvim_buf_set_lines, buffer, 0, -1, false, result)
-      A.nvim_buf_set_option(buffer, "filetype", F.if_nil(extension, "text"))
+      A.nvim_buf_set_option(buffer, "filetype", if_nil(extension, "text"))
     else _dial(buffer, options.preview.winid, "PREVIEWER ERROR", options.preview.fill.error) end
   else _dial(buffer, options.preview.winid, "PREVIEWER TIMED OUT", options.preview.fill.timeout) end
   return false
@@ -108,8 +108,8 @@ local function redirect(buffer, extension, absolute, options)
 end
 
 local function _filetype_hook(filepath, buffer, options)
-  local extension = N.fnamemodify(filepath, ":e"):lower()
-  local absolute = N.fnamemodify(filepath, ":p")
+  local extension = V.fnamemodify(filepath, ":e"):lower()
+  local absolute = V.fnamemodify(filepath, ":p")
   local handler = scope.supports[extension]
 
   if handler then
@@ -174,7 +174,7 @@ local _MediaPreview = util.make_default_callable(function(options)
     end,
     setup = function(self)
       scope.cleanup(options.cache_path)
-      return F.if_nil(self.state, {})
+      return if_nil(self.state, {})
     end,
     teardown = function()
       if options.backend == "ueberzug" and options._ueberzug then

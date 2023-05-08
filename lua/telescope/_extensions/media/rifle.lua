@@ -1,6 +1,6 @@
 local M = {}
 
-local N = vim.fn
+local V = vim.fn
 
 M.bullets = {
   ["viu"] = { "viu" },
@@ -60,7 +60,7 @@ function meta._sub(this, item)
 end
 
 for command, args in pairs(M.bullets) do
-  if N.executable(args[1]) ~= 1 then M.bullets[command] = nil
+  if V.executable(args[1]) ~= 1 then M.bullets[command] = nil
   else M.bullets[command] = setmetatable(args, { __add = meta._add, __sub = meta._sub, __call = meta._call }) end
 end
 

@@ -20,8 +20,8 @@ local make_entry = require("telescope.make_entry")
 local canned = require("telescope._extensions.media.canned")
 local media_previewer = require("telescope._extensions.media.preview")
 
-local F = vim.F
-local fn = vim.fn
+local if_nil = vim.F.if_nil
+local V = vim.fn
 
 local _TelescopeMediaConfig = {
   backend = "none",
@@ -52,29 +52,29 @@ local function _find_command(options)
   if options.find_command then
     if type(options.find_command) == "function" then return options.find_command(options) end
     return options.find_command
-  elseif 1 == fn.executable("rg") then
+  elseif 1 == V.executable("rg") then
     return { "rg", "--files", "--color", "never" }
-  elseif 1 == fn.executable("fd") then
+  elseif 1 == V.executable("fd") then
     return { "fd", "--type", "f", "--color", "never" }
-  elseif 1 == fn.executable("fdfind") then
+  elseif 1 == V.executable("fdfind") then
     return { "fdfind", "--type", "f", "--color", "never" }
-  elseif 1 == fn.executable("find") then
+  elseif 1 == V.executable("find") then
     return { "find", ".", "-type", "f" }
-  elseif 1 == fn.executable("where") then
+  elseif 1 == V.executable("where") then
     return { "where", "/r", ".", "*" }
   end
   error("Invalid command!", vim.log.levels.ERROR)
 end
 
 local function _setup(options)
-  options = F.if_nil(options, {})
+  options = if_nil(options, {})
   options.find_command = _find_command(options)
   _TelescopeMediaConfig = vim.tbl_deep_extend("keep", options, _TelescopeMediaConfig)
 end
 
 local function _media(options)
-  options = F.if_nil(options, {})
-  options.attach_mappings = F.if_nil(options.attach_mappings, function()
+  options = if_nil(options, {})
+  options.attach_mappings = if_nil(options.attach_mappings, function()
     actions.select_default:replace(function(prompt_buffer)
       local current_picker = action_state.get_current_picker(prompt_buffer)
       local selections = current_picker:get_multi_selection()
@@ -95,7 +95,7 @@ local function _media(options)
   local command = options.find_command[1]
   if options.search_dirs then
     for key, value in pairs(options.search_dirs) do
-      options.search_dirs[key] = fn.expand(value)
+      options.search_dirs[key] = V.expand(value)
     end
   end
 

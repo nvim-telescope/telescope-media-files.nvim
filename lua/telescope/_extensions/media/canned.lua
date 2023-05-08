@@ -5,7 +5,8 @@ local Job = require("plenary.job")
 local actions = require("telescope.actions")
 local actions_state = require("telescope.actions.state")
 
-local N = vim.fn
+local V = vim.fn
+local if_nil = vim.F.if_nil
 
 M.single = {}
 M.multiple = {}
@@ -17,16 +18,16 @@ end
 
 function M.single.copy_path(entry, options)
   entry = _enpath(entry)
-  options = vim.tbl_extend("keep", vim.F.if_nil(options, {}), {
+  options = vim.tbl_extend("keep", if_nil(options, {}), {
     name_mod = ":p",
   })
-  N.setreg(vim.v.register, N.fnamemodify(entry, options.name_mod))
+  V.setreg(vim.v.register, V.fnamemodify(entry, options.name_mod))
 end
 
 function M.single.copy_image(entry, options)
   entry = _enpath(entry)
-  if not vim.tbl_contains({ "png", "jpg", "jpeg", "jiff", "webp" }, N.fnamemodify(entry, ":e")) then return end
-  options = vim.tbl_extend("keep", vim.F.if_nil(options, {}), {
+  if not vim.tbl_contains({ "png", "jpg", "jpeg", "jiff", "webp" }, V.fnamemodify(entry, ":e")) then return end
+  options = vim.tbl_extend("keep", if_nil(options, {}), {
     command = "xclip",
     args = { "-selection", "clipboard", "-target", "image/png", entry },
   })
@@ -35,7 +36,7 @@ end
 
 function M.single.set_wallpaper(entry, options)
   entry = _enpath(entry)
-  if not vim.tbl_contains({ "png", "jpg", "jpeg", "jiff", "webp" }, N.fnamemodify(entry, ":e")) then return end
+  if not vim.tbl_contains({ "png", "jpg", "jpeg", "jiff", "webp" }, V.fnamemodify(entry, ":e")) then return end
   vim.ui.select(
     {
       "TILE",
@@ -48,7 +49,7 @@ function M.single.set_wallpaper(entry, options)
       format_item = function(item) return "Set background behavior to " .. item end,
     },
     function(choice)
-      Job:new(vim.tbl_extend("keep", vim.F.if_nil(options, {}), {
+      Job:new(vim.tbl_extend("keep", if_nil(options, {}), {
         command = "feh",
         args = { "--bg-" .. choice:lower(), entry },
       })):start()
@@ -58,7 +59,7 @@ end
 
 function M.single.open_path(entry, options)
   entry = _enpath(entry)
-  options = vim.tbl_extend("force", vim.F.if_nil(options, {}), {
+  options = vim.tbl_extend("force", if_nil(options, {}), {
     command = "xdg-open",
     args = { entry },
   })
@@ -67,8 +68,8 @@ end
 
 function M.multiple.bulk_copy(entries, options)
   entries = vim.tbl_map(function(entry) return _enpath(entry) end, entries)
-  options = vim.tbl_extend("keep", vim.F.if_nil(options, {}), { name_mod = ":p" })
-  N.setreg(vim.v.register, table.concat(vim.tbl_map(function(item) return N.fnamemodify(item, options.name_mod) end, entries), "\n"))
+  options = vim.tbl_extend("keep", if_nil(options, {}), { name_mod = ":p" })
+  V.setreg(vim.v.register, table.concat(vim.tbl_map(function(item) return V.fnamemodify(item, options.name_mod) end, entries), "\n"))
 end
 
 local function _split(prompt_buffer, command)
