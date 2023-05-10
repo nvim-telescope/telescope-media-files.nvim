@@ -107,28 +107,29 @@ However, you could also pass a table into the extension call.
 require("telescope").setup({
   extensions = {
     media = {
-      backend = "viu", -- "none"|"ueberzug"|"viu"|"chafa"|"jp2a"|"catimg"
+      backend = "viu", -- image/gif backend
       backend_options = {
         viu = {
-          move = true, -- experimental GIF preview
+          move = true, -- GIF preview
         },
       },
-      on_confirm = canned.single.copy_path,
+      on_confirm_single = canned.single.copy_path,
       on_confirm_muliple = canned.multiple.bulk_copy,
-      cache_path = "/tmp/tele.media.cache",
+      cache_path = vim.fn.stdpath("cache") .. "/media"),
     }
   }
 })
+
 -- NOTE: It should be noted that if media.attach_mappings key is added then
--- NOTE: | on_confirm or, on_confirm_muliple will not be called as a consequence.
--- NOTE: | you will have to either call a canned function or, call your own
--- NOTE: | function manually inside attach_mappings.
+--       on_confirm_single/on_confirm_muliple will not be called as a consequence.
+--       you will have to either call a canned function or, call your own
+--       function manually inside attach_mappings.
 ```
 
 ## DEFAULTS
 
 ```lua
-local _TelescopeMediaConfig = {
+local defaults = {
   backend = "none",
   backend_options = {
     chafa = { move = false },
@@ -137,7 +138,7 @@ local _TelescopeMediaConfig = {
     pxv = { move = false },
     ueberzug = { xmove = -1, ymove = -2 },
   },
-  on_confirm = canned.single.copy_path,
+  on_confirm_single = canned.single.copy_path,
   on_confirm_muliple = canned.multiple.bulk_copy,
   cache_path = "/tmp/media",
   preview_title = "",

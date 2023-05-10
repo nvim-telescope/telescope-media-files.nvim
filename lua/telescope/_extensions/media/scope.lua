@@ -3,6 +3,7 @@ local M = {}
 local Path = require("plenary.path")
 local sha = require("telescope._extensions.media.sha")
 local engine = require("telescope._extensions.media.engine")
+local Log = require("telescope._extensions.media.log")
 local scandir = require("plenary.scandir")
 
 local V = vim.fn
@@ -24,8 +25,10 @@ function M.load_caches(cache_path)
     for _, file in ipairs(files) do
       M.caches[file] = true
     end
+    Log.info("load_caches(): all caches are loaded.")
   else
     cache_path:mkdir({ parents = true, exists_ok = true })
+    Log.info("load_caches(): cache path does not exist. created.")
   end
 end
 
@@ -48,6 +51,7 @@ local function _encode_options(filepath, cache_path, options)
   ---@diagnostic disable-next-line: param-type-mismatch
   local encoded_path = sha.sha512(uv.fs_stat(filepath).ino .. filepath):upper() .. ".jpg"
   local cached_path = cache_path.filename .. "/" .. encoded_path
+  Log.debug("_encode_options(): created cache entry: " .. cached_path .. " from: " .. filepath)
   return if_nil(M.caches[encoded_path] and cached_path, false), encoded_path, cached_path
 end
 

@@ -9,6 +9,8 @@ if not present then
   return
 end
 
+local if_nil = vim.F.if_nil
+
 local actions = require("telescope.actions")
 local finders = require("telescope.finders")
 local pickers = require("telescope.pickers")
@@ -17,66 +19,9 @@ local config = require("telescope.config")
 local action_state = require("telescope.actions.state")
 local make_entry = require("telescope.make_entry")
 
-local canned = require("telescope._extensions.media.canned")
-local media_previewer = require("telescope._extensions.media.preview")
-
-local if_nil = vim.F.if_nil
-local V = vim.fn
-
-local _TelescopeMediaConfig = {
-  backend = "none",
-  backend_options = {
-    chafa = { move = false },
-    catimg = { move = false },
-    viu = { move = false },
-    pxv = { move = false },
-    ueberzug = { xmove = -1, ymove = -2 },
-  },
-  on_confirm = canned.single.copy_path,
-  on_confirm_muliple = canned.multiple.bulk_copy,
-  cache_path = "/tmp/media",
-  preview_title = "",
-  results_title = "",
-  prompt_title = "Media",
-  cwd = vim.loop.cwd(),
-  preview = {
-    timeout = 200,
-    redraw = false,
-    wait = 10,
-    fill = {
-      mime = "",
-      permission = "╱",
-      binary = "X",
-      file = "~",
-      error = ":",
-      timeout = "+",
-    },
-  },
-}
-
-local function _find_command(options)
-  if options.find_command then
-    if type(options.find_command) == "function" then return options.find_command(options) end
-    return options.find_command
-  elseif 1 == V.executable("rg") then
-    return { "rg", "--files", "--color", "never" }
-  elseif 1 == V.executable("fd") then
-    return { "fd", "--type", "f", "--color", "never" }
-  elseif 1 == V.executable("fdfind") then
-    return { "fdfind", "--type", "f", "--color", "never" }
-  elseif 1 == V.executable("find") then
-    return { "find", ".", "-type", "f" }
-  elseif 1 == V.executable("where") then
-    return { "where", "/r", ".", "*" }
-  end
-  error("Invalid command!", vim.log.levels.ERROR)
-end
-
-local function _setup(options)
-  options = if_nil(options, {})
-  options.find_command = _find_command(options)
-  _TelescopeMediaConfig = vim.tbl_deep_extend("keep", options, _TelescopeMediaConfig)
-end
+local MediaPreviewer = require("telescope._extensions.media.preview")
+local Config = require("telescope._extensions.media.config")
+local Log = require("telescope._extensions.media.log")
 
 local function _media(options)
   options = if_nil(options, {})
@@ -85,10 +30,13 @@ local function _media(options)
       local current_picker = action_state.get_current_picker(prompt_buffer)
       local selections = current_picker:get_multi_selection()
 
+      Log.debug("_media(): picker window has been closed")
       actions.close(prompt_buffer)
       if #selections < 2 then
+        Log.debug("_media(): selections are lesser than 2 - calling options.on_confirm_single...")
         options.on_confirm(action_state.get_selected_entry())
       else
+        Log.debug("_media(): selections are greater than 2 - calling options.on_confirm_multiple...")
         selections = vim.tbl_map(function(item) return item[1] end, selections)
         options.on_confirm_muliple(selections)
       end
@@ -96,12 +44,12 @@ local function _media(options)
     return true
   end)
 
-  options = vim.tbl_deep_extend("keep", options, _TelescopeMediaConfig)
+  options = Config.extend(options)
 
   local command = options.find_command[1]
   if options.search_dirs then
     for key, value in pairs(options.search_dirs) do
-      options.search_dirs[key] = V.expand(value)
+      options.search_dirs[key] = vim.fn.expand(value)
     end
   end
 
@@ -154,21 +102,21 @@ local function _media(options)
   local picker = pickers.new(options, {
     prompt_title = "Media",
     finder = finders.new_oneshot_job(options.find_command, options),
-    previewer = media_previewer.new(options),
+    previewer = MediaPreviewer.new(options),
     sorter = config.values.file_sorter(options),
   })
 
   local line_count = vim.o.lines - vim.o.cmdheight
   if vim.o.laststatus ~= 0 then line_count = line_count - 1 end
 
+  ---@diagnostic disable-next-line: undefined-field
   popup_options = picker:get_window_options(vim.o.columns, line_count)
+  Log.debug("_media(): picker has been opened")
   picker:find()
 end
 
 -- TODO: Add presets like image_media, font_media, audio_media, etc.
 return telescope.register_extension({
-  setup = _setup,
-  exports = {
-    media = _media,
-  },
+  setup = Config.merge,
+  exports = { media = _media },
 })

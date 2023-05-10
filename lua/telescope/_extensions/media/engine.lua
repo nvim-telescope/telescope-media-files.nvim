@@ -2,6 +2,7 @@ local M = {}
 
 local Job = require("plenary.job")
 local V = vim.fn
+local Log = require("telescope._extensions.media.log")
 
 local function _Task(options)
   local task = Job:new(vim.tbl_extend("keep", options, {
@@ -9,6 +10,7 @@ local function _Task(options)
     enable_handlers = false,
     enable_recording = false,
   }))
+  Log.debug("_Task(): started a task with command: " .. task.command .. " and args: " .. table.concat(task.args, " "))
   task:start()
   return task
 end

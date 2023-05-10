@@ -165,6 +165,8 @@ local function _filetype_hook(filepath, buffer, options)
       and backend_options.move
     then
       file_cachepath = absolute
+    elseif options.backend == "file" then
+      return redirect(buffer, extension, absolute, options)
     else
       file_cachepath = handler(absolute, options.cache_path, options)
     end
