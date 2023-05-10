@@ -1,36 +1,44 @@
 local M = {}
-
 local V = vim.fn
 
 M.bullets = {
-  ["viu"] = { "viu" },
-  ["chafa"] = { "chafa" },
-  ["w3m"] = { "w3m", "-no-mouse", "-dump" },
   ["jp2a"] = { "jp2a", "--colors" },
+  ["chafa"] = { "chafa" },
+  ["viu"] = { "viu" },
   ["catimg"] = { "catimg" },
+
+  ["w3m"] = { "w3m", "-no-mouse", "-dump" },
   ["lynx"] = { "lynx", "-dump" },
+  ["elinks"] = { "elinks", "-dump" },
+
   ["glow"] = { "glow", "--style=auto" },
-  ["readelf"] = { "readelf", "--wide", "--demangle=auto", "--all" },
-  ["file"] = { "file", "--no-pad", "--dereference" },
+  ["pandoc"] = { "pandoc", "--standalone", "--to=markdown" },
+
   ["transmission-show"] = { "transmission-show", "--unsorted" },
   ["aria2c"] = { "aria2c", "--show-file" },
-  ["elinks"] = { "elinks", "-dump" },
-  ["pandoc"] = { "pandoc", "--standalone", "--to=markdown" },
-  ["odt2txt"] = { "odt2txt" },
+
   ["jq"] = { "jq", "--color-output", "--raw-output", "--monochrome-output", "." },
   ["python"] = { "python", "-m", "json.tool" },
+
+  ["odt2txt"] = { "odt2txt" },
   ["xlsx2csv"] = { "xlsx2csv" },
   ["jupyter"] = { "jupyter", "nbconvert", "--to", "markdown", "--stdout" },
+
   ["mediainfo"] = { "mediainfo" },
   ["exiftool"] = { "exiftool" },
+
   ["catdoc"] = { "catdoc" },
   ["mu"] = { "mu", "view" },
   ["xls2csv"] = { "xls2csv" },
   ["djvutxt"] = { "djvutxt" },
+
   ["bsdtar"] = { "bsdtar", "--list", "--file" },
   ["atool"] = { "atool", "--list" },
   ["unrar"] = { "unrar", "lt", "-p-" },
   ["7z"] = { "7z", "l", "-p" },
+
+  ["readelf"] = { "readelf", "--wide", "--demangle=auto", "--all" },
+  ["file"] = { "file", "--no-pad", "--dereference" },
 }
 
 local meta = {}
@@ -60,8 +68,15 @@ function meta._sub(this, item)
 end
 
 for command, args in pairs(M.bullets) do
-  if V.executable(args[1]) ~= 1 then M.bullets[command] = nil
-  else M.bullets[command] = setmetatable(args, { __add = meta._add, __sub = meta._sub, __call = meta._call }) end
+  if V.executable(args[1]) ~= 1 then
+    M.bullets[command] = nil
+  else
+    M.bullets[command] = setmetatable(args, {
+      __add = meta._add,
+      __sub = meta._sub,
+      __call = meta._call,
+    })
+  end
 end
 
 function M.orders(extras, ...)
@@ -74,6 +89,13 @@ end
 
 M.bullets = setmetatable(M.bullets, {
   __call = function(self, _) return vim.tbl_keys(self) end,
+  __newindex = function(this, key, value)
+    rawset(this, key, setmetatable(value, {
+      __add = meta._add,
+      __sub = meta._sub,
+      __call = meta._call,
+    }))
+  end,
 })
 
 return M

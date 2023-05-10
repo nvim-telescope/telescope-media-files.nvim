@@ -10,29 +10,30 @@ local scope = require("telescope._extensions.media.scope")
 local rifle = require("telescope._extensions.media.rifle")
 local mutil = require("telescope._extensions.media.util")
 
+local B = rifle.bullets
 local NULL = vim.NIL
 local ERROR = vim.log.levels.ERROR
 
+local fnamemod = vim.fn.fnamemodify
+local fs_access = vim.loop.fs_access
 local if_nil = vim.F.if_nil
-local U = vim.loop
-local V = vim.fn
-local A = vim.api
-local B = rifle.bullets
+local set_lines = vim.api.nvim_buf_set_lines
+local set_option = vim.api.nvim_buf_set_option
 
-local function _dial(buffer, window, message, fill) pcall(putil.set_preview_message, buffer, window, message, fill) end
+local function dialog(buffer, window, message, fill) pcall(putil.set_preview_message, buffer, window, message, fill) end
 
 local function _run(command, buffer, options, extension)
   local task = Job:new(command)
   local ok, result, code = pcall(Job.sync, task, options.preview.timeout, options.preview.wait, options.preview.redraw)
   if ok then
     if code == 0 then
-      pcall(A.nvim_buf_set_lines, buffer, 0, -1, false, result)
-      A.nvim_buf_set_option(buffer, "filetype", if_nil(extension, "text"))
+      pcall(set_lines, buffer, 0, -1, false, result)
+      set_option(buffer, "filetype", if_nil(extension, "text"))
     else
-      _dial(buffer, options.preview.winid, "PREVIEWER ERROR", options.preview.fill.error)
+      dialog(buffer, options.preview.winid, "PREVIEWER ERROR", options.preview.fill.error)
     end
   else
-    _dial(buffer, options.preview.winid, "PREVIEWER TIMED OUT", options.preview.fill.timeout)
+    dialog(buffer, options.preview.winid, "PREVIEWER TIMED OUT", options.preview.fill.timeout)
   end
   return false
 end
@@ -141,58 +142,58 @@ local function redirect(buffer, extension, absolute, options)
   -- last line of defence
   if B.file then
     local results = util.get_os_command_output(B.file + absolute)[1]
-    _dial(buffer, window, vim.split(results, ": ", { plain = true })[2], fill_binary)
+    dialog(buffer, window, vim.split(results, ": ", { plain = true })[2], fill_binary)
     return false
   end
 
-  _dial(buffer, window, "CANNOT PREVIEW FILE", fill_file)
+  dialog(buffer, window, "CANNOT PREVIEW FILE", fill_file)
   return false
 end
 
 local function _filetype_hook(filepath, buffer, options)
-  local extension = V.fnamemodify(filepath, ":e"):lower()
-  local absolute = V.fnamemodify(filepath, ":p")
+  local extension = fnamemod(filepath, ":e"):lower()
+  local absolute = fnamemod(filepath, ":p")
   local handler = scope.supports[extension]
 
   if handler then
-    local _cache
+    local file_cachepath
+    local backend_options = options.backend_options[options.backend]
     if
       extension == "gif"
-      and vim.tbl_contains({ "chafa", "viu", "catimg" }, options.backend)
-      and options.backend_options[options.backend]
-      and options.backend_options[options.backend].move
+      and vim.tbl_contains({ "catimg", "chafa", "viu", "pxv" }, options.backend)
+      and backend_options
+      and backend_options.move
     then
-      _cache = absolute
+      file_cachepath = absolute
     else
-      _cache = handler(absolute, options.cache_path, options)
+      file_cachepath = handler(absolute, options.cache_path, options)
     end
-    if _cache == NULL then return redirect(buffer, extension, absolute, options) end
+    if file_cachepath == NULL then return redirect(buffer, extension, absolute, options) end
 
     local win = options.get_preview_window()
     if options.backend == "ueberzug" then
       options._ueberzug:send({
-        path = _cache,
-        x = win.col + options.backend_options.ueberzug.xmove,
-        y = win.line + options.backend_options.ueberzug.ymove,
+        path = file_cachepath,
+        x = win.col + backend_options.xmove,
+        y = win.line + backend_options.ymove,
         width = win.width,
         height = win.height,
       })
-    elseif options.backend == "viu" then
-      if not B.viu then error("viu isn't in PATH.", ERROR) end
-      mutil.termopen(buffer, B.viu + _cache)
-    elseif options.backend == "chafa" then
-      if not B.chafa then error("chafa isn't in PATH.", ERROR) end
-      mutil.termopen(buffer, B.chafa + _cache)
-    elseif options.backend == "jp2a" then
-      if not B.jp2a then error("jp2a isn't in PATH.", ERROR) end
-      mutil.termopen(buffer, B.jp2a + _cache)
-    elseif options.backend == "catimg" then
-      if not B.catimg then error("catimg isn't in PATH.", ERROR) end
-      mutil.termopen(buffer, B.catimg + _cache)
     else
-      return redirect(buffer, extension, absolute, options)
+      if not B[options.backend] then
+        local message = {
+          "# `" .. options.backend .. "` could not be found.\n",
+          "Following are the possible reasons.",
+          "- Not in `$PATH`",
+          "- Has not been registered into `rifle.bullets`.",
+        }
+        vim.notify(table.concat(message, "\n"), ERROR)
+        return redirect(buffer, extension, absolute, options)
+      end
+
+      mutil.termopen(buffer, B[options.backend] + file_cachepath)
+      return false
     end
-    return false
   end
   return redirect(buffer, extension, absolute, options)
 end
@@ -213,17 +214,16 @@ local _MediaPreview = util.make_default_callable(function(options)
   return bview.new_buffer_previewer({
     define_preview = function(self, entry, status)
       local entry_full = (string.format("%s/%s", entry.cwd, entry.value):gsub("//", "/"))
-      -- stylua: ignore start
-      U.fs_access(entry_full, "R", vim.schedule_wrap(function(_, permission)
+      local function read_access_callback(_, permission)
         if permission then
-          -- TODO: Is there any other way of doing this?
+          -- TODO: Are there any other way of doing this?
           options.preview.winid = status.preview_win
           bview.file_maker(entry_full, self.state.bufnr, options)
           return
         end
-        _dial(self.state.bufnr, self.state.winid, "INSUFFICIENT PERMISSIONS", fill_perm)
-      end))
-      -- stylua: ignore end
+        dialog(self.state.bufnr, self.state.winid, "INSUFFICIENT PERMISSIONS", fill_perm)
+      end
+      fs_access(entry_full, "R", vim.schedule_wrap(read_access_callback))
       if options.backend == "ueberzug" then options._ueberzug:hide() end
     end,
     setup = function(self)

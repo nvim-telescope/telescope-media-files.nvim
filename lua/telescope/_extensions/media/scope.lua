@@ -45,6 +45,7 @@ end
 
 local function _encode_options(filepath, cache_path, options)
   if options.alias then filepath = options.alias end
+  ---@diagnostic disable-next-line: param-type-mismatch
   local encoded_path = sha.sha512(uv.fs_stat(filepath).ino .. filepath):upper() .. ".jpg"
   local cached_path = cache_path.filename .. "/" .. encoded_path
   return if_nil(M.caches[encoded_path] and cached_path, false), encoded_path, cached_path

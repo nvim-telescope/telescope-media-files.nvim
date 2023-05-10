@@ -25,21 +25,12 @@ local V = vim.fn
 
 local _TelescopeMediaConfig = {
   backend = "none",
-  move = false,
   backend_options = {
-    chafa = {
-      move = false
-    },
-    catimg = {
-      move = false
-    },
-    viu = {
-      move = false
-    },
-    ueberzug = {
-      xmove = -1,
-      ymove = -2,
-    }
+    chafa = { move = false },
+    catimg = { move = false },
+    viu = { move = false },
+    pxv = { move = false },
+    ueberzug = { xmove = -1, ymove = -2 },
   },
   on_confirm = canned.single.copy_path,
   on_confirm_muliple = canned.multiple.bulk_copy,

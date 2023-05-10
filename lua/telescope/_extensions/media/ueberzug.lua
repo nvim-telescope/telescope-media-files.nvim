@@ -72,7 +72,7 @@ function Ueberzug:send(message)
 end
 
 function Ueberzug:hide()
-  -- self:send({ path = vim.NIL, x = 1, y = 1, width = 1, height = 1 })
+  self:send({ path = vim.NIL, x = 1, y = 1, width = 1, height = 1 })
 end
 
 return Ueberzug

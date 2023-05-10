@@ -78,11 +78,18 @@ use({
   config = function()
     require("telescope").load_extension("media")
   end,
-  requires = {
-    "nvim-lua/plenary.nvim",
-    "nvim-telescope/telescope.nvim",
-  }
 })
+```
+
+## LAZY
+
+```lua
+{
+  "dharmx/telescope-media.nvim",
+  config = function()
+    require("telescope").load_extension("media")
+  end,
+}
 ```
 
 ## SETUP
@@ -101,7 +108,11 @@ require("telescope").setup({
   extensions = {
     media = {
       backend = "viu", -- "none"|"ueberzug"|"viu"|"chafa"|"jp2a"|"catimg"
-      move = true, -- experimental GIF preview
+      backend_options = {
+        viu = {
+          move = true, -- experimental GIF preview
+        },
+      },
       on_confirm = canned.single.copy_path,
       on_confirm_muliple = canned.multiple.bulk_copy,
       cache_path = "/tmp/tele.media.cache",
@@ -112,6 +123,62 @@ require("telescope").setup({
 -- NOTE: | on_confirm or, on_confirm_muliple will not be called as a consequence.
 -- NOTE: | you will have to either call a canned function or, call your own
 -- NOTE: | function manually inside attach_mappings.
+```
+
+## DEFAULTS
+
+```lua
+local _TelescopeMediaConfig = {
+  backend = "none",
+  backend_options = {
+    chafa = { move = false },
+    catimg = { move = false },
+    viu = { move = false },
+    pxv = { move = false },
+    ueberzug = { xmove = -1, ymove = -2 },
+  },
+  on_confirm = canned.single.copy_path,
+  on_confirm_muliple = canned.multiple.bulk_copy,
+  cache_path = "/tmp/media",
+  preview_title = "",
+  results_title = "",
+  prompt_title = "Media",
+  cwd = vim.fn.getcwd(),
+  preview = {
+    timeout = 200,
+    redraw = false,
+    wait = 10,
+    fill = {
+      mime = "",
+      permission = "╱",
+      binary = "X",
+      file = "~",
+      error = ":",
+      timeout = "+",
+    },
+  },
+}
+```
+
+## ADD BACKEND
+
+```lua
+require("telescope._extensions.media.rifle").bullets.my_cool_backend = {
+  "--width", vim.o.columns,
+  "--height", vim.o.lines,
+  "--silent",
+  "--loop=no",
+}
+
+require("telescope").load_extension("media")
+
+-- Use your backend by:
+require("telescope").extensions.media.media({
+  backend = "my_cool_backend",
+})
+
+-- For VimL folks:
+-- :Telescope media backend=my_cool_backend
 ```
 
 ## COMMANDS
