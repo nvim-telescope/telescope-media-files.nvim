@@ -26,9 +26,24 @@ local V = vim.fn
 local _TelescopeMediaConfig = {
   backend = "none",
   move = false,
+  backend_options = {
+    chafa = {
+      move = false
+    },
+    catimg = {
+      move = false
+    },
+    viu = {
+      move = false
+    },
+    ueberzug = {
+      xmove = -1,
+      ymove = -2,
+    }
+  },
   on_confirm = canned.single.copy_path,
   on_confirm_muliple = canned.multiple.bulk_copy,
-  cache_path = "/tmp/tele.media.cache",
+  cache_path = "/tmp/media",
   preview_title = "",
   results_title = "",
   prompt_title = "Media",

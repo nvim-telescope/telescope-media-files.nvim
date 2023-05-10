@@ -28,8 +28,12 @@ local function _run(command, buffer, options, extension)
     if code == 0 then
       pcall(A.nvim_buf_set_lines, buffer, 0, -1, false, result)
       A.nvim_buf_set_option(buffer, "filetype", if_nil(extension, "text"))
-    else _dial(buffer, options.preview.winid, "PREVIEWER ERROR", options.preview.fill.error) end
-  else _dial(buffer, options.preview.winid, "PREVIEWER TIMED OUT", options.preview.fill.timeout) end
+    else
+      _dial(buffer, options.preview.winid, "PREVIEWER ERROR", options.preview.fill.error)
+    end
+  else
+    _dial(buffer, options.preview.winid, "PREVIEWER TIMED OUT", options.preview.fill.timeout)
+  end
   return false
 end
 
@@ -43,7 +47,45 @@ local function redirect(buffer, extension, absolute, options)
   -- TODO: This looks vile. Cleanup is required.
   if B.readelf and vim.tbl_contains({ "x-executable", "x-pie-executable", "x-sharedlib" }, _mime[2]) then
     return _run(B.readelf + absolute, buffer, options)
-  elseif vim.tbl_contains({ "a", "ace", "alz", "arc", "arj", "bz", "bz2", "cab", "cpio", "deb", "gz", "jar", "lha", "lz", "lzh", "lzma", "lzo", "rpm", "rz", "t7z", "tar", "tbz", "tbz2", "tgz", "tlz", "txz", "tZ", "tzo", "war", "xpi", "xz", "Z", "zip" }, extension) then
+  elseif
+    -- Huge list of archive filetypes/extensions. {{{
+    vim.tbl_contains({
+      "a",
+      "ace",
+      "alz",
+      "arc",
+      "arj",
+      "bz",
+      "bz2",
+      "cab",
+      "cpio",
+      "deb",
+      "gz",
+      "jar",
+      "lha",
+      "lz",
+      "lzh",
+      "lzma",
+      "lzo",
+      "rpm",
+      "rz",
+      "t7z",
+      "tar",
+      "tbz",
+      "tbz2",
+      "tgz",
+      "tlz",
+      "txz",
+      "tZ",
+      "tzo",
+      "war",
+      "xpi",
+      "xz",
+      "Z",
+      "zip",
+    }, extension)
+    -- }}}
+  then
     local command = rifle.orders(absolute, "bsdtar", "atool")
     if command then _run(command, buffer, options) end
   elseif extension == "rar" and B.unrar then
@@ -114,15 +156,27 @@ local function _filetype_hook(filepath, buffer, options)
 
   if handler then
     local _cache
-    -- stylua: ignore start
-    if options.move and extension == "gif" and vim.tbl_contains({ "chafa", "viu", "ueberzug" }, options.backend) then _cache = absolute
-    else _cache = handler(absolute, options.cache_path, options) end
+    if
+      extension == "gif"
+      and vim.tbl_contains({ "chafa", "viu", "catimg" }, options.backend)
+      and options.backend_options[options.backend]
+      and options.backend_options[options.backend].move
+    then
+      _cache = absolute
+    else
+      _cache = handler(absolute, options.cache_path, options)
+    end
     if _cache == NULL then return redirect(buffer, extension, absolute, options) end
-    -- stylua: ignore end
 
     local win = options.get_preview_window()
     if options.backend == "ueberzug" then
-      options._ueberzug:send({ path = _cache, x = win.col - 1, y = win.line, width = win.width, height = win.height })
+      options._ueberzug:send({
+        path = _cache,
+        x = win.col + options.backend_options.ueberzug.xmove,
+        y = win.line + options.backend_options.ueberzug.ymove,
+        width = win.width,
+        height = win.height,
+      })
     elseif options.backend == "viu" then
       if not B.viu then error("viu isn't in PATH.", ERROR) end
       mutil.termopen(buffer, B.viu + _cache)

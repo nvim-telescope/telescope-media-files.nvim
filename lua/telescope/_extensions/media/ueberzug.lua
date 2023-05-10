@@ -21,19 +21,22 @@ local function _tail(fifo, options)
   })
 end
 
-function Ueberzug:new(fifo)
+function Ueberzug:new(fifo, silent)
   fifo = Path:new(fifo)
   fifo:touch({ parents = true })
 
+  local args = { "layer", "--parser", "json" }
+  if silent then table.insert(args, 1, "--silent") end
   local ueberzug_task = Job:new({
     command = "ueberzug",
-    args = {
-      "--silent",
-      "layer",
-      "--parser",
-      "json",
-    },
+    args = args,
     writer = _tail(fifo.filename),
+    on_exit = vim.schedule_wrap(function(this, code, signal)
+      local errors = "```\n" .. table.concat(this:stderr_result(), "\n") .. "```"
+      if errors ~= "" then
+        vim.notify(string.format("# ueberzug exited with code `%s` and signal `%s`.\n%s", code, signal, errors))
+      end
+    end),
   })
 
   self.__index = self
@@ -53,7 +56,7 @@ end
 function Ueberzug:send(message)
   local defaults = {
     action = "add",
-    identifier = "tele.media.fifo",
+    identifier = "media",
     x = 0,
     y = 0,
     width = 100,
@@ -68,6 +71,8 @@ function Ueberzug:send(message)
   self.fifo:write((vim.json.encode(message):gsub("\\", "")) .. "\n", "a")
 end
 
-function Ueberzug:hide() self:send({ path = vim.NIL, x = 1, y = 1, width = 1, height = 1 }) end
+function Ueberzug:hide()
+  -- self:send({ path = vim.NIL, x = 1, y = 1, width = 1, height = 1 })
+end
 
 return Ueberzug
