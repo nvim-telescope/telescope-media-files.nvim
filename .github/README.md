@@ -15,6 +15,7 @@ in `/tmp/tele.media.cache` directory.
 
 ## SUPPORTS
 
+<!-- {{{ -->
 Following are the filetypes that this picker supports.
 
 <details>
@@ -69,6 +70,7 @@ Following are the filetypes that this picker supports.
 </details>
 
 > NOTE: This plugin is only supported in Linux.
+<!-- }}} -->
 
 ## PACKER
 
@@ -128,6 +130,7 @@ require("telescope").setup({
 
 ## DEFAULTS
 
+<!-- {{{ -->
 ```lua
 local defaults = {
   backend = "none",
@@ -160,30 +163,64 @@ local defaults = {
   },
 }
 ```
+<!-- }}} -->
 
 ## ADD BACKEND
 
+<!-- {{{ -->
 ```lua
+-- Registration.
 require("telescope._extensions.media.rifle").bullets.my_cool_backend = {
-  "--width", vim.o.columns,
-  "--height", vim.o.lines,
+  "my_cool_backend",
   "--silent",
   "--loop=no",
 }
 
+-- Optional. Global extension setup.
+require("telescope").setup({
+  extensions = {
+    media = {
+      backend = "my_cool_backend",
+      backend_options = {
+        pxv = {
+          move = true,
+          -- these will be parsed and concatenated into string[]
+          extra_args = {
+            size = "fit", -- after conversion: --size fit
+            ["--frames"] = 5, -- after conversion: --frames 5
+            -- make sure the returning value is either boolean/string/number
+            columns = function(window, options)
+              return window.width
+            end,
+            "-r", function(window, options) return window.height end,
+            "-i",
+          },
+        },
+      },
+    },
+  },
+})
 require("telescope").load_extension("media")
 
 -- Use your backend by:
-require("telescope").extensions.media.media({
+require("telescope").extensions.media.media({ -- On the fly setup.
   backend = "my_cool_backend",
+  backend_options = {
+    my_cool_backend = {
+      move = false,
+      extra_args = { "--still" }, -- previous values will be discarded.
+    },
+  },
 })
 
 -- For VimL folks:
 -- :Telescope media backend=my_cool_backend
 ```
+<!-- }}} -->
 
 ## COMMANDS
 
+<!-- {{{ -->
 ```vim
 :Telescope media
 
@@ -201,9 +238,11 @@ require('telescope').extensions.media.media({
 })
 EOF
 ```
+<!-- }}} -->
 
 ## PREREQUISITES
 
+<!-- {{{ -->
 Some of these are optional.
 
 - [ueberzug](https://github.com/seebye/ueberzug) is required for viewing images.
@@ -231,9 +270,11 @@ Some of these are optional.
 - [jq](https://stedolan.github.io/jq/) for JSON.
 - [catdoc](https://www.wagner.pp.ru/~vitus/software/catdoc/) for MS-WORD and RTF.
 - [python](https://www.python.org/) for JSON.
+<!-- }}} -->
 
 ## TODOS
 
+<!-- {{{ -->
 <details>
 
 <summary>This is getting out of hand.</summary>
@@ -295,6 +336,7 @@ Some of these are optional.
 - [x] Do not use `get_os_command_output` for possible long jobs.
 
 </details>
+<!-- }}} -->
 
 ## CREDITS
 

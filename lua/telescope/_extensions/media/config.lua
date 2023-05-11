@@ -9,7 +9,6 @@ M._defaults = {
     catimg = { move = false },
     chafa = { move = false },
     viu = { move = false },
-    pxv = { move = false },
   },
   on_confirm_single = function(...)
     require("telescope._extensions.media.canned").single.copy_path(...)
