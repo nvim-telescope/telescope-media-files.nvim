@@ -163,7 +163,7 @@ local function _filetype_hook(filepath, buffer, options)
     local extra_args = if_nil(backend_options.extra_args, {})
     if
       extension == "gif"
-      and vim.tbl_contains({ "catimg", "chafa", "viu", "pxv" }, backend)
+      and vim.tbl_contains(Rifle.moveables, backend)
       and backend_options
       and backend_options.move
     then

@@ -170,11 +170,13 @@ local defaults = {
 <!-- {{{ -->
 ```lua
 -- Registration.
-require("telescope._extensions.media.rifle").bullets.my_cool_backend = {
-  "my_cool_backend",
-  "--silent",
-  "--loop=no",
-}
+local Rifle = require("telescope._extensions.media.rifle")
+Rifle.bullets({ "my_cool_backend", "--silent", "--loop=no" })
+-- alternatively: Rifle.bullets("my_cool_backend") -- no extra args
+--                Rifle.bullets({ "my_cool_backend" }) -- no extra args
+--                Rifle.bullets({ "my_cool_backend", "--still" }) -- [1] will be taken
+--                Rifle.bullets.my_cool_backend = { "my_cool_backend" } -- no extra args
+Rifle.moveables("my_cool_backend") -- backend supports GIFs
 
 -- Optional. Global extension setup.
 require("telescope").setup({

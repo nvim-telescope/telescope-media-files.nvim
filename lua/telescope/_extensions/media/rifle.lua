@@ -1,6 +1,12 @@
 local M = {}
 local V = vim.fn
 
+M.moveables = setmetatable({ "catimg", "chafa", "viu" }, {
+  __call = function(self, new)
+    if not vim.tbl_contains(self, new) then table.insert(self, new) end
+  end,
+})
+
 M.bullets = {
   ["jp2a"] = { "jp2a", "--colors" },
   ["chafa"] = { "chafa" },
@@ -88,7 +94,16 @@ function M.orders(extras, ...)
 end
 
 M.bullets = setmetatable(M.bullets, {
-  __call = function(self, _) return vim.tbl_keys(self) end,
+  __call = function(self, new)
+    local new_type = type(new)
+    if new_type == "string" then
+      self[new] = { new }
+    elseif new_type == "table" and #new > 0 then
+      self[new[1]] = new
+    else
+      error("only arrays and string (without spaces) are allowed. new: " .. vim.inspect(new))
+    end
+  end,
   __newindex = function(this, key, value)
     rawset(this, key, setmetatable(value, {
       __add = meta._add,
