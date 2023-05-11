@@ -32,8 +32,9 @@ function Ueberzug:new(fifo, silent)
     args = args,
     writer = _tail(fifo.filename),
     on_exit = vim.schedule_wrap(function(this, code, signal)
-      local errors = "```\n" .. table.concat(this:stderr_result(), "\n") .. "```"
+      local errors = vim.trim(table.concat(this:stderr_result(), "\n"))
       if errors ~= "" then
+        local errors = "```\n" .. errors .. "\n```"
         vim.notify(string.format("# ueberzug exited with code `%s` and signal `%s`.\n%s", code, signal, errors))
       end
     end),
@@ -57,22 +58,19 @@ function Ueberzug:send(message)
   local defaults = {
     action = "add",
     identifier = "media",
-    x = 0,
-    y = 0,
-    width = 100,
-    height = 50,
+    x = 0, y = 0,
+    width = 100, height = 50,
   }
-
-  message = vim.tbl_extend("keep", type(message) == "table" and message or {
-    path = message,
-  }, defaults)
-  assert(message.action == "add", "Changing action key is not allowed.", vim.log.levels.ERROR)
-
-  self.fifo:write((vim.json.encode(message):gsub("\\", "")) .. "\n", "a")
+  assert(type(message) == "table")
+  if message.action ~= "remove" then message = vim.tbl_extend("keep", message, defaults) end
+  self.fifo:write(vim.json.encode(message) .. "\n", "a")
 end
 
 function Ueberzug:hide()
-  self:send({ path = vim.NIL, x = 1, y = 1, width = 1, height = 1 })
+  self:send({
+    action = "remove",
+    identifier = "media"
+  })
 end
 
 return Ueberzug

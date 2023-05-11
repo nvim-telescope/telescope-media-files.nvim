@@ -25,6 +25,20 @@ local Log = require("telescope._extensions.media.log")
 
 local function _media(options)
   options = if_nil(options, {})
+  -- TODO: Remove if fixed. See #9.
+  if options.backend == "ueberzug" then
+    local message = {
+      "# See issue `#9`.\n",
+      "**Ueberzug** might not work properly.",
+      "Consider using a different backend instead.",
+    }
+    vim.notify_once(table.concat(message, "\n"), vim.log.levels.WARN, {
+      title = "telescope-media.nvim",
+      prompt_title = "telescope-media.nvim",
+      icon = " ",
+    })
+  end
+
   options.attach_mappings = if_nil(options.attach_mappings, function()
     actions.select_default:replace(function(prompt_buffer)
       local current_picker = action_state.get_current_picker(prompt_buffer)

@@ -5,10 +5,14 @@ local executable = vim.fn.executable
 M._defaults = {
   backend = "file",
   backend_options = {
-    ueberzug = { xmove = -1, ymove = -2 },
     catimg = { move = false },
     chafa = { move = false },
     viu = { move = false },
+    ueberzug = {
+      xmove = -1,
+      ymove = -2,
+      messages = false,
+    },
   },
   on_confirm_single = function(...)
     require("telescope._extensions.media.canned").single.copy_path(...)

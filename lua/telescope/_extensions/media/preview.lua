@@ -184,6 +184,7 @@ local function _filetype_hook(filepath, buffer, options)
         width = window_options.width,
         height = window_options.height,
       })
+      return false
     else
       if not B[backend] then
         local message = {
@@ -211,8 +212,9 @@ local _MediaPreview = util.make_default_callable(function(options)
   Scope.load_caches(options.cache_path)
   local fill_perm = options.preview.fill.permission
 
+  local ueberzug_options = if_nil(options.backend_options["ueberzug"], {})
   if options.backend == "ueberzug" then
-    options._ueberzug = Ueberzug:new(os.tmpname())
+    options._ueberzug = Ueberzug:new(os.tmpname(), not ueberzug_options.messages)
     options._ueberzug:listen()
   end
 
