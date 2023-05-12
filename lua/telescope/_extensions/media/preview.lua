@@ -89,7 +89,7 @@ local function redirect(buffer, extension, absolute, options)
     -- }}}
   then
     local command = Rifle.orders(absolute, "bsdtar", "atool")
-    if command then _run(command, buffer, options) end
+    if command then return _run(command, buffer, options) end
   elseif extension == "rar" and B.unrar then
     return _run(B.unrar + absolute, buffer, options)
   elseif extension == "7z" and B["7z"] then
@@ -214,7 +214,7 @@ local _MediaPreview = util.make_default_callable(function(options)
 
   local ueberzug_options = if_nil(options.backend_options["ueberzug"], {})
   if options.backend == "ueberzug" then
-    options._ueberzug = Ueberzug:new(os.tmpname(), not ueberzug_options.messages)
+    options._ueberzug = Ueberzug:new(os.tmpname(), not ueberzug_options.warnings)
     options._ueberzug:listen()
   end
 

@@ -11,7 +11,8 @@ M._defaults = {
     ueberzug = {
       xmove = -1,
       ymove = -2,
-      messages = false,
+      warnings = false,
+      supress_backend_warning = false,
     },
   },
   on_confirm_single = function(...)
