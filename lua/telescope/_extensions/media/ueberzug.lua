@@ -58,8 +58,10 @@ function Ueberzug:send(message)
   local defaults = {
     action = "add",
     identifier = "media",
-    x = 0, y = 0,
-    width = 100, height = 50,
+    x = 0,
+    y = 0,
+    width = 100,
+    height = 50,
   }
   assert(type(message) == "table")
   if message.action ~= "remove" then message = vim.tbl_extend("keep", message, defaults) end
@@ -69,7 +71,7 @@ end
 function Ueberzug:hide()
   self:send({
     action = "remove",
-    identifier = "media"
+    identifier = "media",
   })
 end
 

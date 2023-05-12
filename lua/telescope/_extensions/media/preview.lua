@@ -11,7 +11,9 @@ local Rifle = require("telescope._extensions.media.rifle")
 local Util = require("telescope._extensions.media.util")
 local Log = require("telescope._extensions.media.log")
 
-local B = Rifle.bullets
+local fb = Rifle.file_backends
+local ib = Rifle.image_backends
+
 local NULL = vim.NIL
 local ERROR = vim.log.levels.ERROR
 
@@ -40,15 +42,15 @@ local function _run(command, buffer, options, extension)
 end
 
 local function redirect(buffer, extension, absolute, options)
-  local mime = util.get_os_command_output(B.file + { "--brief", "--mime-type", absolute })[1]
+  local mime = util.get_os_command_output(fb.file + { "--brief", "--mime-type", absolute })[1]
   local _mime = vim.split(mime, "/", { plain = true })
   local window = options.preview.winid
   local fill_binary = options.preview.fill.binary
   local fill_file = options.preview.fill.file
 
   -- TODO: This looks vile. Cleanup is required.
-  if B.readelf and vim.tbl_contains({ "x-executable", "x-pie-executable", "x-sharedlib" }, _mime[2]) then
-    return _run(B.readelf + absolute, buffer, options)
+  if fb.readelf and vim.tbl_contains({ "x-executable", "x-pie-executable", "x-sharedlib" }, _mime[2]) then
+    return _run(fb.readelf + absolute, buffer, options)
   elseif
     -- Huge list of archive filetypes/extensions. {{{
     vim.tbl_contains({
@@ -90,45 +92,45 @@ local function redirect(buffer, extension, absolute, options)
   then
     local command = Rifle.orders(absolute, "bsdtar", "atool")
     if command then return _run(command, buffer, options) end
-  elseif extension == "rar" and B.unrar then
-    return _run(B.unrar + absolute, buffer, options)
-  elseif extension == "7z" and B["7z"] then
-    return _run(B["7z"] + absolute, buffer, options)
-  elseif extension == "pdf" and B.exiftool then
-    return _run(B.exiftool + absolute, buffer, options)
+  elseif extension == "rar" and fb.unrar then
+    return _run(fb.unrar + absolute, buffer, options)
+  elseif extension == "7z" and fb["7z"] then
+    return _run(fb["7z"] + absolute, buffer, options)
+  elseif extension == "pdf" and fb.exiftool then
+    return _run(fb.exiftool + absolute, buffer, options)
   elseif extension == "torrent" then
     local command = Rifle.orders(absolute, "transmission-show", "aria2c")
     if command then return _run(command, buffer, options) end
   elseif vim.tbl_contains({ "odt", "sxw", "ods", "odp" }, extension) then
     local command = Rifle.orders(absolute, "odt2txt", "pandoc")
     if command then return _run(command, buffer, options) end
-  elseif extension == "xlsx" and B.xlsx2csv then
-    return _run(B.xlsx2csv + absolute, buffer, options)
-  elseif Util.any(mime, "wordprocessingml%.document$", "/epub%+zip$", "/x%-fictionbook%+xml$") and B.pandoc then
-    return _run(B.pandoc + absolute, buffer, options, "markdown")
-  elseif Util.any(mime, "text/rtf$", "msword$") and B.catdoc then
-    return _run(B.catdoc + absolute, buffer, options)
-  elseif Util.any(_mime[2], "ms%-excel$") and B.xls2csv then
-    return _run(B.xls2csv + absolute, buffer, options)
-  elseif Util.any(mime, "message/rfc822$") and B.mu then
-    return _run(B.mu + absolute, buffer, options)
+  elseif extension == "xlsx" and fb.xlsx2csv then
+    return _run(fb.xlsx2csv + absolute, buffer, options)
+  elseif Util.any(mime, "wordprocessingml%.document$", "/epub%+zip$", "/x%-fictionbook%+xml$") and fb.pandoc then
+    return _run(fb.pandoc + absolute, buffer, options, "markdown")
+  elseif Util.any(mime, "text/rtf$", "msword$") and fb.catdoc then
+    return _run(fb.catdoc + absolute, buffer, options)
+  elseif Util.any(_mime[2], "ms%-excel$") and fb.xls2csv then
+    return _run(fb.xls2csv + absolute, buffer, options)
+  elseif Util.any(mime, "message/rfc822$") and fb.mu then
+    return _run(fb.mu + absolute, buffer, options)
   elseif Util.any(mime, "^image/vnd%.djvu") then
     local command = Rifle.orders(absolute, "djvutxt", "exiftool")
     if command then return Util.termopen(buffer, command) end
-  elseif Util.any(mime, "^image/") and B.exiftool then
-    return _run(B.exiftool + absolute, buffer, options)
+  elseif Util.any(mime, "^image/") and fb.exiftool then
+    return _run(fb.exiftool + absolute, buffer, options)
   elseif Util.any(mime, "^audio/", "^video/") then
     local command = Rifle.orders(absolute, "mediainfo", "exiftool")
     if command then return Util.termopen(buffer, command) end
   elseif extension == "md" then
-    if B.glow then return Util.termopen(buffer, B.glow + absolute) end
+    if fb.glow then return Util.termopen(buffer, fb.glow + absolute) end
     return true
   elseif vim.tbl_contains({ "htm", "html", "xhtml", "xhtm" }, extension) then
     local command = Rifle.orders(absolute, "lynx", "w3m", "elinks", "pandoc")
     if command then return _run(command, buffer, options, "markdown") end
     return true
-  elseif extension == "ipynb" and B.jupyter then
-    return _run(B.jupyter + absolute, buffer, options, "markdown")
+  elseif extension == "ipynb" and fb.jupyter then
+    return _run(fb.jupyter + absolute, buffer, options, "markdown")
   elseif _mime[2] == "json" or extension == "json" then
     local command = Rifle.orders(absolute, "jq", "python")
     if command then return _run(command, buffer, options, "json") end
@@ -141,8 +143,8 @@ local function redirect(buffer, extension, absolute, options)
   end
 
   -- last line of defence
-  if B.file then
-    local results = util.get_os_command_output(B.file + absolute)[1]
+  if fb.file then
+    local results = util.get_os_command_output(fb.file + absolute)[1]
     dialog(buffer, window, vim.split(results, ": ", { plain = true })[2], fill_binary)
     return false
   end
@@ -163,7 +165,7 @@ local function _filetype_hook(filepath, buffer, options)
     local extra_args = if_nil(backend_options.extra_args, {})
     if
       extension == "gif"
-      and vim.tbl_contains(Rifle.moveables, backend)
+      and vim.tbl_contains(Rifle.allows_gifs, backend)
       and backend_options
       and backend_options.move
     then
@@ -186,7 +188,7 @@ local function _filetype_hook(filepath, buffer, options)
       })
       return false
     else
-      if not B[backend] then
+      if not ib[backend] then
         local message = {
           "# `" .. backend .. "` could not be found.\n",
           "Following are the possible reasons.",
@@ -198,7 +200,7 @@ local function _filetype_hook(filepath, buffer, options)
       end
 
       local parsed_extra_args = Util.parse_args(extra_args, window_options, options)
-      local total_args = B[options.backend] + vim.tbl_flatten({ parsed_extra_args, file_cachepath })
+      local total_args = ib[backend] + vim.tbl_flatten({ parsed_extra_args, file_cachepath })
       Log.debug("_filetype_hook(): arguments generated for " .. backend .. ": " .. table.concat(total_args, " "))
       Util.termopen(buffer, total_args)
       return false

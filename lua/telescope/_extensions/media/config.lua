@@ -15,12 +15,8 @@ M._defaults = {
       supress_backend_warning = false,
     },
   },
-  on_confirm_single = function(...)
-    require("telescope._extensions.media.canned").single.copy_path(...)
-  end,
-  on_confirm_muliple = function(...)
-    require("telescope._extensions.media.canned").multiple.bulk_copy(...)
-  end,
+  on_confirm_single = function(...) require("telescope._extensions.media.canned").single.copy_path(...) end,
+  on_confirm_muliple = function(...) require("telescope._extensions.media.canned").multiple.bulk_copy(...) end,
   cache_path = "/tmp/media",
   preview_title = "Preview",
   results_title = "Files",
