@@ -264,8 +264,7 @@ do
       value = value + digit * weight
       weight = weight * 2 ^ 24
     end
-    return
-      result, -- long integer
+    return result, -- long integer
       value -- and its floating point approximation
   end
 

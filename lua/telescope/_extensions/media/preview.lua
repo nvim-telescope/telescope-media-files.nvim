@@ -1,16 +1,19 @@
 local Path = require("plenary.path")
 local Job = require("plenary.job")
-local Ueberzug = require("telescope._extensions.media.ueberzug")
 
 local util = require("telescope.utils")
 local bview = require("telescope.previewers.buffer_previewer")
 local putil = require("telescope.previewers.utils")
 
-local scope = require("telescope._extensions.media.scope")
-local rifle = require("telescope._extensions.media.rifle")
-local mutil = require("telescope._extensions.media.util")
+local Ueberzug = require("telescope._extensions.media.ueberzug")
+local Scope = require("telescope._extensions.media.scope")
+local Rifle = require("telescope._extensions.media.rifle")
+local Util = require("telescope._extensions.media.util")
+local Log = require("telescope._extensions.media.log")
 
-local B = rifle.bullets
+local fb = Rifle.file_backends
+local ib = Rifle.image_backends
+
 local NULL = vim.NIL
 local ERROR = vim.log.levels.ERROR
 
@@ -39,15 +42,15 @@ local function _run(command, buffer, options, extension)
 end
 
 local function redirect(buffer, extension, absolute, options)
-  local mime = util.get_os_command_output(B.file + { "--brief", "--mime-type", absolute })[1]
+  local mime = util.get_os_command_output(fb.file + { "--brief", "--mime-type", absolute })[1]
   local _mime = vim.split(mime, "/", { plain = true })
   local window = options.preview.winid
   local fill_binary = options.preview.fill.binary
   local fill_file = options.preview.fill.file
 
   -- TODO: This looks vile. Cleanup is required.
-  if B.readelf and vim.tbl_contains({ "x-executable", "x-pie-executable", "x-sharedlib" }, _mime[2]) then
-    return _run(B.readelf + absolute, buffer, options)
+  if fb.readelf and vim.tbl_contains({ "x-executable", "x-pie-executable", "x-sharedlib" }, _mime[2]) then
+    return _run(fb.readelf + absolute, buffer, options)
   elseif
     -- Huge list of archive filetypes/extensions. {{{
     vim.tbl_contains({
@@ -87,61 +90,61 @@ local function redirect(buffer, extension, absolute, options)
     }, extension)
     -- }}}
   then
-    local command = rifle.orders(absolute, "bsdtar", "atool")
-    if command then _run(command, buffer, options) end
-  elseif extension == "rar" and B.unrar then
-    return _run(B.unrar + absolute, buffer, options)
-  elseif extension == "7z" and B["7z"] then
-    return _run(B["7z"] + absolute, buffer, options)
-  elseif extension == "pdf" and B.exiftool then
-    return _run(B.exiftool + absolute, buffer, options)
+    local command = Rifle.orders(absolute, "bsdtar", "atool")
+    if command then return _run(command, buffer, options) end
+  elseif extension == "rar" and fb.unrar then
+    return _run(fb.unrar + absolute, buffer, options)
+  elseif extension == "7z" and fb["7z"] then
+    return _run(fb["7z"] + absolute, buffer, options)
+  elseif extension == "pdf" and fb.exiftool then
+    return _run(fb.exiftool + absolute, buffer, options)
   elseif extension == "torrent" then
-    local command = rifle.orders(absolute, "transmission-show", "aria2c")
+    local command = Rifle.orders(absolute, "transmission-show", "aria2c")
     if command then return _run(command, buffer, options) end
   elseif vim.tbl_contains({ "odt", "sxw", "ods", "odp" }, extension) then
-    local command = rifle.orders(absolute, "odt2txt", "pandoc")
+    local command = Rifle.orders(absolute, "odt2txt", "pandoc")
     if command then return _run(command, buffer, options) end
-  elseif extension == "xlsx" and B.xlsx2csv then
-    return _run(B.xlsx2csv + absolute, buffer, options)
-  elseif mutil.any(mime, "wordprocessingml%.document$", "/epub%+zip$", "/x%-fictionbook%+xml$") and B.pandoc then
-    return _run(B.pandoc + absolute, buffer, options, "markdown")
-  elseif mutil.any(mime, "text/rtf$", "msword$") and B.catdoc then
-    return _run(B.catdoc + absolute, buffer, options)
-  elseif mutil.any(_mime[2], "ms%-excel$") and B.xls2csv then
-    return _run(B.xls2csv + absolute, buffer, options)
-  elseif mutil.any(mime, "message/rfc822$") and B.mu then
-    return _run(B.mu + absolute, buffer, options)
-  elseif mutil.any(mime, "^image/vnd%.djvu") then
-    local command = rifle.orders(absolute, "djvutxt", "exiftool")
-    if command then return mutil.termopen(buffer, command) end
-  elseif mutil.any(mime, "^image/") and B.exiftool then
-    return _run(B.exiftool + absolute, buffer, options)
-  elseif mutil.any(mime, "^audio/", "^video/") then
-    local command = rifle.orders(absolute, "mediainfo", "exiftool")
-    if command then return mutil.termopen(buffer, command) end
+  elseif extension == "xlsx" and fb.xlsx2csv then
+    return _run(fb.xlsx2csv + absolute, buffer, options)
+  elseif Util.any(mime, "wordprocessingml%.document$", "/epub%+zip$", "/x%-fictionbook%+xml$") and fb.pandoc then
+    return _run(fb.pandoc + absolute, buffer, options, "markdown")
+  elseif Util.any(mime, "text/rtf$", "msword$") and fb.catdoc then
+    return _run(fb.catdoc + absolute, buffer, options)
+  elseif Util.any(_mime[2], "ms%-excel$") and fb.xls2csv then
+    return _run(fb.xls2csv + absolute, buffer, options)
+  elseif Util.any(mime, "message/rfc822$") and fb.mu then
+    return _run(fb.mu + absolute, buffer, options)
+  elseif Util.any(mime, "^image/vnd%.djvu") then
+    local command = Rifle.orders(absolute, "djvutxt", "exiftool")
+    if command then return Util.termopen(buffer, command) end
+  elseif Util.any(mime, "^image/") and fb.exiftool then
+    return _run(fb.exiftool + absolute, buffer, options)
+  elseif Util.any(mime, "^audio/", "^video/") then
+    local command = Rifle.orders(absolute, "mediainfo", "exiftool")
+    if command then return Util.termopen(buffer, command) end
   elseif extension == "md" then
-    if B.glow then return mutil.termopen(buffer, B.glow + absolute) end
+    if fb.glow then return Util.termopen(buffer, fb.glow + absolute) end
     return true
   elseif vim.tbl_contains({ "htm", "html", "xhtml", "xhtm" }, extension) then
-    local command = rifle.orders(absolute, "lynx", "w3m", "elinks", "pandoc")
+    local command = Rifle.orders(absolute, "lynx", "w3m", "elinks", "pandoc")
     if command then return _run(command, buffer, options, "markdown") end
     return true
-  elseif extension == "ipynb" and B.jupyter then
-    return _run(B.jupyter + absolute, buffer, options, "markdown")
+  elseif extension == "ipynb" and fb.jupyter then
+    return _run(fb.jupyter + absolute, buffer, options, "markdown")
   elseif _mime[2] == "json" or extension == "json" then
-    local command = rifle.orders(absolute, "jq", "python")
+    local command = Rifle.orders(absolute, "jq", "python")
     if command then return _run(command, buffer, options, "json") end
     return true
   elseif vim.tbl_contains({ "dff", "dsf", "wv", "wvc" }, extension) then
-    local command = rifle.orders(absolute, "mediainfo", "exiftool")
+    local command = Rifle.orders(absolute, "mediainfo", "exiftool")
     if command then return _run(command, buffer, options) end
   elseif _mime[1] == "text" or vim.tbl_contains({ "lua" }, extension) then
     return true
   end
 
   -- last line of defence
-  if B.file then
-    local results = util.get_os_command_output(B.file + absolute)[1]
+  if fb.file then
+    local results = util.get_os_command_output(fb.file + absolute)[1]
     dialog(buffer, window, vim.split(results, ": ", { plain = true })[2], fill_binary)
     return false
   end
@@ -153,14 +156,16 @@ end
 local function _filetype_hook(filepath, buffer, options)
   local extension = fnamemod(filepath, ":e"):lower()
   local absolute = fnamemod(filepath, ":p")
-  local handler = scope.supports[extension]
+  local handler = Scope.supports[extension]
 
   if handler then
     local file_cachepath
-    local backend_options = options.backend_options[options.backend]
+    local backend = options.backend
+    local backend_options = if_nil(options.backend_options[backend], {})
+    local extra_args = if_nil(backend_options.extra_args, {})
     if
       extension == "gif"
-      and vim.tbl_contains({ "catimg", "chafa", "viu", "pxv" }, options.backend)
+      and vim.tbl_contains(Rifle.allows_gifs, backend)
       and backend_options
       and backend_options.move
     then
@@ -172,28 +177,32 @@ local function _filetype_hook(filepath, buffer, options)
     end
     if file_cachepath == NULL then return redirect(buffer, extension, absolute, options) end
 
-    local win = options.get_preview_window()
+    local window_options = options.get_preview_window()
     if options.backend == "ueberzug" then
       options._ueberzug:send({
         path = file_cachepath,
-        x = win.col + backend_options.xmove,
-        y = win.line + backend_options.ymove,
-        width = win.width,
-        height = win.height,
+        x = window_options.col + backend_options.xmove,
+        y = window_options.line + backend_options.ymove,
+        width = window_options.width,
+        height = window_options.height,
       })
+      return false
     else
-      if not B[options.backend] then
+      if not ib[backend] then
         local message = {
-          "# `" .. options.backend .. "` could not be found.\n",
+          "# `" .. backend .. "` could not be found.\n",
           "Following are the possible reasons.",
-          "- Not in `$PATH`",
-          "- Has not been registered into `rifle.bullets`.",
+          "- Binary is not in `$PATH`",
+          "- Has not been registered into the `rifle.bullets` table.",
         }
         vim.notify(table.concat(message, "\n"), ERROR)
         return redirect(buffer, extension, absolute, options)
       end
 
-      mutil.termopen(buffer, B[options.backend] + file_cachepath)
+      local parsed_extra_args = Util.parse_args(extra_args, window_options, options)
+      local total_args = ib[backend] + vim.tbl_flatten({ parsed_extra_args, file_cachepath })
+      Log.debug("_filetype_hook(): arguments generated for " .. backend .. ": " .. table.concat(total_args, " "))
+      Util.termopen(buffer, total_args)
       return false
     end
   end
@@ -202,11 +211,12 @@ end
 
 local _MediaPreview = util.make_default_callable(function(options)
   options.cache_path = Path:new(options.cache_path)
-  scope.load_caches(options.cache_path)
+  Scope.load_caches(options.cache_path)
   local fill_perm = options.preview.fill.permission
 
+  local ueberzug_options = if_nil(options.backend_options["ueberzug"], {})
   if options.backend == "ueberzug" then
-    options._ueberzug = Ueberzug:new(os.tmpname())
+    options._ueberzug = Ueberzug:new(os.tmpname(), not ueberzug_options.warnings)
     options._ueberzug:listen()
   end
 
@@ -226,16 +236,21 @@ local _MediaPreview = util.make_default_callable(function(options)
         dialog(self.state.bufnr, self.state.winid, "INSUFFICIENT PERMISSIONS", fill_perm)
       end
       fs_access(entry_full, "R", vim.schedule_wrap(read_access_callback))
-      if options.backend == "ueberzug" then options._ueberzug:hide() end
+      if options.backend == "ueberzug" then
+        Log.debug("define_preview(): ueberzug window is now hidden.")
+        options._ueberzug:hide()
+      end
     end,
     setup = function(self)
-      scope.cleanup(options.cache_path)
+      Scope.cleanup(options.cache_path)
+      Log.debug("setup(): removed non-cache files")
       return if_nil(self.state, {})
     end,
     teardown = function()
       if options.backend == "ueberzug" and options._ueberzug then
         options._ueberzug:kill()
         options._ueberzug = nil
+        Log.info("teardown(): killed ueberzug process.")
       end
     end,
   })

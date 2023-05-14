@@ -1,12 +1,19 @@
 local M = {}
-local V = vim.fn
 
-M.bullets = {
+M.allows_gifs = {
+  "catimg",
+  "chafa",
+  "viu",
+}
+
+M.image_backends = {
   ["jp2a"] = { "jp2a", "--colors" },
   ["chafa"] = { "chafa" },
   ["viu"] = { "viu" },
   ["catimg"] = { "catimg" },
+}
 
+M.file_backends = {
   ["w3m"] = { "w3m", "-no-mouse", "-dump" },
   ["lynx"] = { "lynx", "-dump" },
   ["elinks"] = { "elinks", "-dump" },
@@ -41,6 +48,15 @@ M.bullets = {
   ["file"] = { "file", "--no-pad", "--dereference" },
 }
 
+-- {{{
+function M.orders(extras, ...)
+  local binaries = { ... }
+  for _, binary in ipairs(binaries) do
+    local bullet = M.file_backends[binary]
+    if bullet then return bullet + extras end
+  end
+end
+
 local meta = {}
 
 function meta._add(this, item)
@@ -67,35 +83,56 @@ function meta._sub(this, item)
   error("Only string and list are allowed.", vim.log.levels.ERROR)
 end
 
-for command, args in pairs(M.bullets) do
-  if V.executable(args[1]) ~= 1 then
-    M.bullets[command] = nil
-  else
-    M.bullets[command] = setmetatable(args, {
-      __add = meta._add,
-      __sub = meta._sub,
-      __call = meta._call,
-    })
+local function set_submeta(map)
+  for command, args in pairs(map) do
+    if vim.fn.executable(args[1]) ~= 1 then
+      map[command] = nil
+    else
+      map[command] = setmetatable(args, {
+        __add = meta._add,
+        __sub = meta._sub,
+        __call = meta._call,
+      })
+    end
   end
 end
 
-function M.orders(extras, ...)
-  local binaries = { ... }
-  for _, binary in ipairs(binaries) do
-    local bullet = M.bullets[binary]
-    if bullet then return bullet + extras end
-  end
-end
-
-M.bullets = setmetatable(M.bullets, {
-  __call = function(self, _) return vim.tbl_keys(self) end,
-  __newindex = function(this, key, value)
-    rawset(this, key, setmetatable(value, {
-      __add = meta._add,
-      __sub = meta._sub,
-      __call = meta._call,
-    }))
+local moveables_meta = {
+  __call = function(self, new)
+    if not vim.tbl_contains(self, new) then table.insert(self, new) end
   end,
-})
+}
+
+local rounds_bullets_meta = {
+  __call = function(self, new)
+    local new_type = type(new)
+    if new_type == "string" then
+      self[new] = { new }
+    elseif new_type == "table" and #new > 0 then
+      self[new[1]] = new
+    else
+      error("only arrays and string (without spaces) are allowed. new: " .. vim.inspect(new))
+    end
+  end,
+  __newindex = function(this, key, value)
+    rawset(
+      this,
+      key,
+      setmetatable(value, {
+        __add = meta._add,
+        __sub = meta._sub,
+        __call = meta._call,
+      })
+    )
+  end,
+}
+
+set_submeta(M.image_backends)
+set_submeta(M.file_backends)
+
+setmetatable(M.allows_gifs, moveables_meta)
+setmetatable(M.image_backends, rounds_bullets_meta)
+setmetatable(M.file_backends, rounds_bullets_meta)
 
 return M
+-- }}}

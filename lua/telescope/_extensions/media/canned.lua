@@ -12,9 +12,7 @@ M.single = {}
 M.multiple = {}
 M.actions = {}
 
-local function _enpath(entry)
-  return (string.format("%s/%s", entry.cwd, entry.value):gsub("//", "/"))
-end
+local function _enpath(entry) return (string.format("%s/%s", entry.cwd, entry.value):gsub("//", "/")) end
 
 function M.single.copy_path(entry, options)
   entry = _enpath(entry)
@@ -69,7 +67,10 @@ end
 function M.multiple.bulk_copy(entries, options)
   entries = vim.tbl_map(function(entry) return _enpath(entry) end, entries)
   options = vim.tbl_extend("keep", if_nil(options, {}), { name_mod = ":p" })
-  V.setreg(vim.v.register, table.concat(vim.tbl_map(function(item) return V.fnamemodify(item, options.name_mod) end, entries), "\n"))
+  V.setreg(
+    vim.v.register,
+    table.concat(vim.tbl_map(function(item) return V.fnamemodify(item, options.name_mod) end, entries), "\n")
+  )
 end
 
 local function _split(prompt_buffer, command)
