@@ -25,6 +25,8 @@ local Log = require("telescope._extensions.media.log")
 
 local function _media(options)
   options = if_nil(options, {})
+  options.backend_options = if_nil(options.backend_options, {})
+  options.backend_options.ueberzug = if_nil(options.backend_options.ueberzug, {})
   -- TODO: Remove if fixed. See #9.
   if options.backend == "ueberzug" and not options.backend_options.ueberzug.supress_backend_warning then
     local message = {
