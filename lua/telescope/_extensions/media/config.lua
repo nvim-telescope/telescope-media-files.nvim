@@ -2,6 +2,10 @@ local M = {}
 
 local executable = vim.fn.executable
 
+---@class MediaConfig
+
+---The default telescope-media.nvim configuration table.
+---@type MediaConfig
 M._defaults = {
   backend = "file",
   backend_options = {
@@ -38,6 +42,9 @@ M._defaults = {
   log = {
     plugin = "telescope-media",
     level = "warn",
+    highlights = true,
+    use_file = true,
+    use_quickfix = false,
   },
 }
 
