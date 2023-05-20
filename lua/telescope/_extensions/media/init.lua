@@ -49,12 +49,12 @@ local function _media(options)
       Log.debug("_media(): picker window has been closed")
       actions.close(prompt_buffer)
       if #selections < 2 then
-        Log.debug("_media(): selections are lesser than 2 - calling options.on_confirm_single...")
-        options.on_confirm(action_state.get_selected_entry())
+        Log.debug("_media(): selections are lesser than 2 - calling Callbacks.on_confirm_single...")
+        options.callbacks.on_confirm_single(action_state.get_selected_entry())
       else
-        Log.debug("_media(): selections are greater than 2 - calling options.on_confirm_multiple...")
+        Log.debug("_media(): selections are greater than 2 - calling Callbacks.on_confirm_multiple...")
         selections = vim.tbl_map(function(item) return item[1] end, selections)
-        options.on_confirm_muliple(selections)
+        options.callbacks.on_confirm_muliple(selections)
       end
     end)
     return true

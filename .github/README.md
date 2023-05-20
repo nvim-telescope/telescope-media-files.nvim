@@ -141,8 +141,10 @@ local defaults = {
     pxv = { move = false },
     ueberzug = { xmove = -1, ymove = -2 },
   },
-  on_confirm_single = canned.single.copy_path,
-  on_confirm_muliple = canned.multiple.bulk_copy,
+  callbacks = {
+    on_confirm_single = canned.single.copy_path,
+    on_confirm_muliple = canned.multiple.bulk_copy,
+  },
   cache_path = "/tmp/media",
   preview_title = "",
   results_title = "",
