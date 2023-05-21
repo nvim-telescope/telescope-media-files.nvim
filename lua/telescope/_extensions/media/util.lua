@@ -1,14 +1,43 @@
 local M = {}
 
 local A = vim.api
-local V = vim.fn
+local termopen = vim.fn.termopen
 
+---Encode a lua table into a string array of command line arguments.
+---Consider the following table:
+---```lua
+---{
+---  size = "fit", -- after conversion: --size fit
+---  ["--frames"] = 5, -- after conversion: --frames 5
+---  -- make sure the returning value is either boolean/string/number
+---  columns = function(window, options)
+---    return window.width
+---  end,
+---  "-r", function(window, options) return window.height end,
+---  "-i",
+---}
+---```
+---This will be turned into a table of strings:
+---```lua
+---{
+---  "--size", "fit",
+---  "--frames", "5",
+---  "--columns", "150",
+---  "-r", 100,
+---  "-i",
+---}
+--```
+---@param args table
+---@param ... any these will be passed into the functional arguments
+---@return table
 function M.parse_args(args, ...)
   local results = {}
   for key, value in pairs(args) do
     local value_type = type(value)
     local key_type = type(key)
 
+    -- if current key type is a number then it is an array entry
+    -- which means we can ignore the key and use the value instead
     if key_type == "number" then
       if value_type == "string" then
         table.insert(results, value)
@@ -18,6 +47,7 @@ function M.parse_args(args, ...)
         local function_value = value(...)
         local function_value_type = type(function_value)
 
+        --- function return value should only be string, boolean and number
         if function_value_type == "string" then
           table.insert(results, function_value)
         elseif function_value_type == "boolean" then
@@ -33,10 +63,11 @@ function M.parse_args(args, ...)
         error("key can only be a string, number, boolean or, a function. key_type: " .. key_type)
       end
     elseif key_type == "string" then
+      -- if the current key is not same as '-', '--' or if it does not start with '--' then skip
       if key ~= "-" and key ~= "--" and not vim.startswith(key, "--") then
-        if key:len() > 2 then
+        if key:len() > 2 then -- file -> --file
           key = "--" .. key
-        elseif not vim.startswith(key, "-") then
+        elseif not vim.startswith(key, "-") then -- f -> -f
           key = "-" .. key
         end
       end
@@ -77,6 +108,11 @@ function M.parse_args(args, ...)
   return results
 end
 
+---Match the first argument with all the others. If any of them ends up being a match
+---then return true false otherwise.
+---@param item string the argument that will be matched with the rest of the arguments
+---@param ... string other arguments which will be matched with `item`
+---@return boolean
 function M.any(item, ...)
   local patterns = { ... }
   if #patterns == 1 then return item:match(patterns[1]) end
@@ -86,9 +122,14 @@ function M.any(item, ...)
   return false
 end
 
+---Open a terminal in a buffer
+---@see help |termopen()|
+---@param buffer number buffer id
+---@param command string[] table of command and its arguments { "file", "--dereference", "--brief", "rifle.lua" }
+---@return boolean
 function M.termopen(buffer, command)
   A.nvim_buf_call(buffer, function()
-    if A.nvim_buf_is_valid(buffer) and A.nvim_buf_get_option(buffer, "modifiable") then V.termopen(command) end
+    if A.nvim_buf_is_valid(buffer) and A.nvim_buf_get_option(buffer, "modifiable") then termopen(command) end
   end)
   return false
 end
