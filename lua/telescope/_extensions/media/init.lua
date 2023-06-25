@@ -16,14 +16,16 @@ local finders = require("telescope.finders")
 local pickers = require("telescope.pickers")
 local config = require("telescope.config")
 
-local action_state = require("telescope.actions.state")
+local actions_state = require("telescope.actions.state")
 local make_entry = require("telescope.make_entry")
 
 local MediaPreviewer = require("telescope._extensions.media.preview")
 local Config = require("telescope._extensions.media.config")
 local Log = require("telescope._extensions.media.log")
 
-local function _media(options)
+---Picker function.
+---@param options any
+local function media(options)
   options = if_nil(options, {})
   options.backend_options = if_nil(options.backend_options, {})
   options.backend_options.ueberzug = if_nil(options.backend_options.ueberzug, {})
@@ -43,16 +45,16 @@ local function _media(options)
 
   options.attach_mappings = if_nil(options.attach_mappings, function()
     actions.select_default:replace(function(prompt_buffer)
-      local current_picker = action_state.get_current_picker(prompt_buffer)
+      local current_picker = actions_state.get_current_picker(prompt_buffer)
       local selections = current_picker:get_multi_selection()
 
-      Log.debug("_media(): picker window has been closed")
+      Log.debug("media(): picker window has been closed")
       actions.close(prompt_buffer)
       if #selections < 2 then
-        Log.debug("_media(): selections are lesser than 2 - calling Callbacks.on_confirm_single...")
-        options.callbacks.on_confirm_single(action_state.get_selected_entry())
+        Log.debug("media(): selections are lesser than 2 - calling Callbacks.on_confirm_single...")
+        options.callbacks.on_confirm_single(actions_state.get_selected_entry())
       else
-        Log.debug("_media(): selections are greater than 2 - calling Callbacks.on_confirm_multiple...")
+        Log.debug("media(): selections are greater than 2 - calling Callbacks.on_confirm_multiple...")
         selections = vim.tbl_map(function(item) return item[1] end, selections)
         options.callbacks.on_confirm_muliple(selections)
       end
@@ -79,6 +81,7 @@ local function _media(options)
         options.find_command[#options.find_command + 1] = "-g"
         options.find_command[#options.find_command + 1] = "*" .. options.search_file .. "*"
       else
+        ---@diagnostic disable-next-line: assign-type-mismatch
         options.find_command[#options.find_command + 1] = options.search_file
       end
     end
@@ -112,9 +115,7 @@ local function _media(options)
 
   local popup_options = {}
   function options.get_preview_window() return popup_options.preview end
-
-  options.entry_maker = make_entry.gen_from_file(options) -- support devicons
-
+  options.entry_maker = make_entry.gen_from_file(options) -- supports devicons
   local picker = pickers.new(options, {
     prompt_title = "Media",
     finder = finders.new_oneshot_job(options.find_command, options),
@@ -131,8 +132,7 @@ local function _media(options)
   picker:find()
 end
 
--- TODO: Add presets like image_media, font_media, audio_media, etc.
 return telescope.register_extension({
   setup = Config.merge,
-  exports = { media = _media },
+  exports = { media = media },
 })

@@ -23,9 +23,11 @@ local if_nil = vim.F.if_nil
 local set_lines = vim.api.nvim_buf_set_lines
 local set_option = vim.api.nvim_buf_set_option
 
-local function dialog(buffer, window, message, fill) pcall(putil.set_preview_message, buffer, window, message, fill) end
+local function dialog(buffer, window, message, fill)
+  pcall(putil.set_preview_message, buffer, window, message, fill)
+end
 
-local function _run(command, buffer, options, extension)
+local function try_run(command, buffer, options, extension)
   local task = Job:new(command)
   local ok, result, code = pcall(Job.sync, task, options.preview.timeout, options.preview.wait, options.preview.redraw)
   if ok then
@@ -43,14 +45,13 @@ end
 
 local function redirect(buffer, extension, absolute, options)
   local mime = util.get_os_command_output(fb.file + { "--brief", "--mime-type", absolute })[1]
-  local _mime = vim.split(mime, "/", { plain = true })
+  local mimetype = vim.split(mime, "/", { plain = true })
   local window = options.preview.winid
   local fill_binary = options.preview.fill.binary
   local fill_file = options.preview.fill.file
 
-  -- TODO: This looks vile. Cleanup is required.
-  if fb.readelf and vim.tbl_contains({ "x-executable", "x-pie-executable", "x-sharedlib" }, _mime[2]) then
-    return _run(fb.readelf + absolute, buffer, options)
+  if fb.readelf and vim.tbl_contains({ "x-executable", "x-pie-executable", "x-sharedlib" }, mimetype[2]) then
+    return try_run(fb.readelf + absolute, buffer, options)
   elseif
     -- Huge list of archive filetypes/extensions. {{{
     vim.tbl_contains({
@@ -91,34 +92,34 @@ local function redirect(buffer, extension, absolute, options)
     -- }}}
   then
     local command = Rifle.orders(absolute, "bsdtar", "atool")
-    if command then return _run(command, buffer, options) end
+    if command then return try_run(command, buffer, options) end
   elseif extension == "rar" and fb.unrar then
-    return _run(fb.unrar + absolute, buffer, options)
+    return try_run(fb.unrar + absolute, buffer, options)
   elseif extension == "7z" and fb["7z"] then
-    return _run(fb["7z"] + absolute, buffer, options)
+    return try_run(fb["7z"] + absolute, buffer, options)
   elseif extension == "pdf" and fb.exiftool then
-    return _run(fb.exiftool + absolute, buffer, options)
+    return try_run(fb.exiftool + absolute, buffer, options)
   elseif extension == "torrent" then
     local command = Rifle.orders(absolute, "transmission-show", "aria2c")
-    if command then return _run(command, buffer, options) end
+    if command then return try_run(command, buffer, options) end
   elseif vim.tbl_contains({ "odt", "sxw", "ods", "odp" }, extension) then
     local command = Rifle.orders(absolute, "odt2txt", "pandoc")
-    if command then return _run(command, buffer, options) end
+    if command then return try_run(command, buffer, options) end
   elseif extension == "xlsx" and fb.xlsx2csv then
-    return _run(fb.xlsx2csv + absolute, buffer, options)
+    return try_run(fb.xlsx2csv + absolute, buffer, options)
   elseif Util.any(mime, "wordprocessingml%.document$", "/epub%+zip$", "/x%-fictionbook%+xml$") and fb.pandoc then
-    return _run(fb.pandoc + absolute, buffer, options, "markdown")
+    return try_run(fb.pandoc + absolute, buffer, options, "markdown")
   elseif Util.any(mime, "text/rtf$", "msword$") and fb.catdoc then
-    return _run(fb.catdoc + absolute, buffer, options)
-  elseif Util.any(_mime[2], "ms%-excel$") and fb.xls2csv then
-    return _run(fb.xls2csv + absolute, buffer, options)
+    return try_run(fb.catdoc + absolute, buffer, options)
+  elseif Util.any(mimetype[2], "ms%-excel$") and fb.xls2csv then
+    return try_run(fb.xls2csv + absolute, buffer, options)
   elseif Util.any(mime, "message/rfc822$") and fb.mu then
-    return _run(fb.mu + absolute, buffer, options)
+    return try_run(fb.mu + absolute, buffer, options)
   elseif Util.any(mime, "^image/vnd%.djvu") then
     local command = Rifle.orders(absolute, "djvutxt", "exiftool")
     if command then return Util.termopen(buffer, command) end
   elseif Util.any(mime, "^image/") and fb.exiftool then
-    return _run(fb.exiftool + absolute, buffer, options)
+    return try_run(fb.exiftool + absolute, buffer, options)
   elseif Util.any(mime, "^audio/", "^video/") then
     local command = Rifle.orders(absolute, "mediainfo", "exiftool")
     if command then return Util.termopen(buffer, command) end
@@ -127,18 +128,18 @@ local function redirect(buffer, extension, absolute, options)
     return true
   elseif vim.tbl_contains({ "htm", "html", "xhtml", "xhtm" }, extension) then
     local command = Rifle.orders(absolute, "lynx", "w3m", "elinks", "pandoc")
-    if command then return _run(command, buffer, options, "markdown") end
+    if command then return try_run(command, buffer, options, "markdown") end
     return true
   elseif extension == "ipynb" and fb.jupyter then
-    return _run(fb.jupyter + absolute, buffer, options, "markdown")
-  elseif _mime[2] == "json" or extension == "json" then
+    return try_run(fb.jupyter + absolute, buffer, options, "markdown")
+  elseif mimetype[2] == "json" or extension == "json" then
     local command = Rifle.orders(absolute, "jq", "python")
-    if command then return _run(command, buffer, options, "json") end
+    if command then return try_run(command, buffer, options, "json") end
     return true
   elseif vim.tbl_contains({ "dff", "dsf", "wv", "wvc" }, extension) then
     local command = Rifle.orders(absolute, "mediainfo", "exiftool")
-    if command then return _run(command, buffer, options) end
-  elseif _mime[1] == "text" or vim.tbl_contains({ "lua" }, extension) then
+    if command then return try_run(command, buffer, options) end
+  elseif mimetype[1] == "text" or vim.tbl_contains({ "lua" }, extension) then
     return true
   end
 
@@ -153,7 +154,7 @@ local function redirect(buffer, extension, absolute, options)
   return false
 end
 
-local function _filetype_hook(filepath, buffer, options)
+local function filetype_hook(filepath, buffer, options)
   local extension = fnamemod(filepath, ":e"):lower()
   local absolute = fnamemod(filepath, ":p")
   local handler = Scope.supports[extension]
@@ -201,15 +202,15 @@ local function _filetype_hook(filepath, buffer, options)
 
       local parsed_extra_args = Util.parse_args(extra_args, window_options, options)
       local total_args = ib[backend] + vim.tbl_flatten({ parsed_extra_args, file_cachepath })
-      Log.debug("_filetype_hook(): arguments generated for " .. backend .. ": " .. table.concat(total_args, " "))
-      Util.termopen(buffer, total_args)
+      Log.debug("filetype_hook(): arguments generated for " .. backend .. ": " .. table.concat(total_args, " "))
+      Util.open_term(buffer, total_args)
       return false
     end
   end
   return redirect(buffer, extension, absolute, options)
 end
 
-local _MediaPreview = util.make_default_callable(function(options)
+local MediaPreview = util.make_default_callable(function(options)
   options.cache_path = Path:new(options.cache_path)
   Scope.load_caches(options.cache_path)
   local fill_perm = options.preview.fill.permission
@@ -220,7 +221,7 @@ local _MediaPreview = util.make_default_callable(function(options)
     options._ueberzug:listen()
   end
 
-  options.preview.filetype_hook = _filetype_hook
+  options.preview.filetype_hook = filetype_hook
   options.preview.msg_bg_fillchar = options.preview.fill.mime
 
   return bview.new_buffer_previewer({
@@ -228,8 +229,9 @@ local _MediaPreview = util.make_default_callable(function(options)
       local entry_full = (string.format("%s/%s", entry.cwd, entry.value):gsub("//", "/"))
       local function read_access_callback(_, permission)
         if permission then
-          -- TODO: Are there any other way of doing this?
+          -- TODO: Is there a nicer way of doing this?
           options.preview.winid = status.preview_win
+          options.winid = status.preview_win -- why?
           bview.file_maker(entry_full, self.state.bufnr, options)
           return
         end
@@ -256,4 +258,4 @@ local _MediaPreview = util.make_default_callable(function(options)
   })
 end)
 
-return _MediaPreview
+return MediaPreview

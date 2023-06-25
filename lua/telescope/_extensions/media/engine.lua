@@ -1,16 +1,16 @@
 local M = {}
 
-local Job = require("plenary.job")
-local V = vim.fn
+local Task = require("plenary.job")
+local fnamemodify = vim.fn.fnamemodify
 local Log = require("telescope._extensions.media.log")
 
-local function _Task(options)
-  local task = Job:new(vim.tbl_extend("keep", options, {
+local function primed_task(options)
+  local task = Task:new(vim.tbl_extend("keep", options, {
     interactive = false,
     enable_handlers = false,
     enable_recording = false,
   }))
-  Log.debug("_Task(): started a task with command: " .. task.command .. " and args: " .. table.concat(task.args, " "))
+  Log.debug("primed_task(): started a task with command: " .. task.command .. " and args: " .. table.concat(task.args, " "))
   task:start()
   return task
 end
@@ -22,7 +22,7 @@ function M.magick(input_path, output_path, options, on_exit)
     interlace = "Plane",
     frame = "[0]",
   })
-  return _Task({
+  return primed_task({
     command = "convert",
     args = {
       "-strip",
@@ -59,7 +59,7 @@ function M.fontmagick(font_path, output_path, options, on_exit)
       [[       (* *) /* */ [| |] {| |} ++ +++ \/ /\ |- -| <!-- <!---       ]],
     },
   })
-  return _Task({
+  return primed_task({
     command = "convert",
     args = {
       "-strip",
@@ -90,7 +90,7 @@ function M.ffmpeg(input_path, output_path, options, on_exit)
     map_finish = "0:V?",
     loglevel = "8",
   })
-  return _Task({
+  return primed_task({
     command = "ffmpeg",
     args = {
       "-i",
@@ -114,7 +114,7 @@ function M.ffmpegthumbnailer(input_path, output_path, options, on_exit)
     size = "0",
     time = "10%",
   })
-  return _Task({
+  return primed_task({
     command = "ffmpegthumbnailer",
     args = {
       "-i",
@@ -137,7 +137,7 @@ function M.pdftoppm(pdf_path, output_path, options, on_exit)
     first_page_to_print = "1",
     last_page_to_print = "1",
   })
-  return _Task({
+  return primed_task({
     command = "pdftoppm",
     args = {
       "-f",
@@ -153,7 +153,7 @@ function M.pdftoppm(pdf_path, output_path, options, on_exit)
       "-tiffcompression",
       "jpeg",
       pdf_path,
-      V.fnamemodify(output_path, ":r"),
+      fnamemodify(output_path, ":r"),
     },
     on_exit = on_exit,
   })
@@ -161,7 +161,7 @@ end
 
 function M.epubthumbnailer(input_path, output_path, options, on_exit)
   options = vim.tbl_extend("keep", options, { size = "2000" })
-  return _Task({
+  return primed_task({
     command = "epub-thumbnailer",
     args = {
       input_path,
@@ -174,7 +174,7 @@ end
 
 function M.ebookmeta(input_path, output_path, options, on_exit)
   options = vim.tbl_extend("keep", options, { size = "2000" })
-  return _Task({
+  return primed_task({
     command = "ebook-meta",
     args = {
       "--get-cover",
@@ -186,7 +186,7 @@ function M.ebookmeta(input_path, output_path, options, on_exit)
 end
 
 function M.zipinfo(input_path, on_exit)
-  return _Task({
+  return primed_task({
     command = "zipinfo",
     args = { "-1", input_path },
     enable_recording = true,
@@ -196,7 +196,7 @@ function M.zipinfo(input_path, on_exit)
 end
 
 function M.unzip(output_directory, zip_path, zip_item, on_exit)
-  return _Task({
+  return primed_task({
     command = "unzip",
     args = { "-d", output_directory, zip_path, zip_item },
     on_exit = on_exit,

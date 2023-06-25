@@ -55,6 +55,12 @@ local executable = vim.fn.executable
 ---@field preview PreviewOptions options related to the preview buffer
 ---@field log LogOptions logger configuration (developer option)
 ---@field find_command string[] command that will fetch file lists
+---@field hidden boolean show hidden files and directories when true
+---@field search_dirs string[] search directories
+---@field no_ignore boolean ignore files/directories
+---@field no_ignore_parent boolean ignore parent files/directories
+---@field follow boolean boolean follow for changes
+---@field search_file boolean search in a specifc file
 
 ---The default telescope-media.nvim configuration table.
 ---@type MediaConfig
@@ -64,7 +70,7 @@ M._defaults = {
     catimg = { move = false },
     chafa = { move = false },
     viu = { move = false },
-    ueberzug = { xmove = -1, ymove = -2, warnings = false, supress_backend_warning = false },
+    ueberzug = { xmove = -1, ymove = -2, warnings = true, supress_backend_warning = false },
   },
   callbacks = {
     on_confirm_single = function(...) require("telescope._extensions.media.canned").single.copy_path(...) end,
