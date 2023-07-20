@@ -1,7 +1,7 @@
 local M = {}
 
 local Log = require("plenary.log")
-local Config = require("telescope._extensions.media.config").get()
+local Config = require("telescope._extensions.media.core.config").get()
 
 ---@class Log
 ---@field debug function

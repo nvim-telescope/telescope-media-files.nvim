@@ -20,8 +20,8 @@ local actions_state = require("telescope.actions.state")
 local make_entry = require("telescope.make_entry")
 
 local MediaPreviewer = require("telescope._extensions.media.preview")
-local Config = require("telescope._extensions.media.config")
-local Log = require("telescope._extensions.media.log")
+local Config = require("telescope._extensions.media.core.config")
+local Log = require("telescope._extensions.media.core.log")
 
 ---Picker function.
 ---@param options any

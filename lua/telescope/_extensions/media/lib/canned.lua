@@ -3,7 +3,7 @@ local M = {}
 local Task = require("plenary.job")
 local V = vim.fn
 local if_nil = vim.F.if_nil
-local Log = require("telescope._extensions.media.log")
+local Log = require("telescope._extensions.media.core.log")
 
 ---Canned functions for single selections only.
 M.single = {}

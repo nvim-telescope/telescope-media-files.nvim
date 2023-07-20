@@ -73,8 +73,8 @@ M._defaults = {
     ueberzug = { xmove = -1, ymove = -2, warnings = true, supress_backend_warning = false },
   },
   callbacks = {
-    on_confirm_single = function(...) require("telescope._extensions.media.canned").single.copy_path(...) end,
-    on_confirm_muliple = function(...) require("telescope._extensions.media.canned").multiple.bulk_copy(...) end,
+    on_confirm_single = function(...) require("telescope._extensions.media.lib.canned").single.copy_path(...) end,
+    on_confirm_muliple = function(...) require("telescope._extensions.media.lib.canned").multiple.bulk_copy(...) end,
   },
   cache_path = "/tmp/media",
   preview_title = "Preview",

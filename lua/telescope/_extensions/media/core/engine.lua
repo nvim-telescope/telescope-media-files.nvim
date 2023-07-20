@@ -2,8 +2,11 @@ local M = {}
 
 local Task = require("plenary.job")
 local fnamemodify = vim.fn.fnamemodify
-local Log = require("telescope._extensions.media.log")
+local Log = require("telescope._extensions.media.core.log")
 
+---Presetted task helper function.
+---@param options table same as what `Job` uses.
+---@return Job
 local function primed_task(options)
   local task = Task:new(vim.tbl_extend("keep", options, {
     interactive = false,
@@ -15,6 +18,12 @@ local function primed_task(options)
   return task
 end
 
+---Descaler for images. This reduces quality, adds blurs to the image.
+---@param input_path any
+---@param output_path any
+---@param options any
+---@param on_exit any
+---@return Job
 function M.magick(input_path, output_path, options, on_exit)
   options = vim.tbl_extend("keep", options, {
     quality = "20%",

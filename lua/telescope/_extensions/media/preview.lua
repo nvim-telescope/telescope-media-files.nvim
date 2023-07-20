@@ -5,11 +5,11 @@ local util = require("telescope.utils")
 local bview = require("telescope.previewers.buffer_previewer")
 local putil = require("telescope.previewers.utils")
 
-local Ueberzug = require("telescope._extensions.media.ueberzug")
-local Scope = require("telescope._extensions.media.scope")
-local Rifle = require("telescope._extensions.media.rifle")
+local Ueberzug = require("telescope._extensions.media.lib.ueberzug")
+local Scope = require("telescope._extensions.media.core.scope")
+local Rifle = require("telescope._extensions.media.core.rifle")
 local Util = require("telescope._extensions.media.util")
-local Log = require("telescope._extensions.media.log")
+local Log = require("telescope._extensions.media.core.log")
 
 local fb = Rifle.file_backends
 local ib = Rifle.image_backends

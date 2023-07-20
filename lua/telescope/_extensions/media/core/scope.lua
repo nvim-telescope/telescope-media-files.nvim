@@ -1,9 +1,9 @@
 local M = {}
 
 local Path = require("plenary.path")
-local sha = require("telescope._extensions.media.sha")
-local engine = require("telescope._extensions.media.engine")
-local Log = require("telescope._extensions.media.log")
+local sha = require("telescope._extensions.media.lib.sha")
+local engine = require("telescope._extensions.media.core.engine")
+local Log = require("telescope._extensions.media.core.log")
 local scandir = require("plenary.scandir")
 
 local V = vim.fn
